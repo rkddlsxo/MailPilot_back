@@ -1,4 +1,6 @@
 from flask import Flask, request, jsonify
+from email.header import decode_header
+from email.utils import parseaddr, parsedate_to_datetime
 from flask_cors import CORS
 import imaplib
 import email
@@ -17,25 +19,40 @@ def summary():
         username = data.get("email")
         app_password = data.get("app_password")
 
-        # Gmail IMAP 접속
         mail = imaplib.IMAP4_SSL("imap.gmail.com")
         mail.login(username, app_password)
         mail.select("inbox")
 
-        # 최신 메일 N개 가져오기
-        N = 3
+        N = 5
         status, data = mail.search(None, "ALL")
         mail_ids = data[0].split()[-N:]
 
-        summaries = []
+        emails = []
 
-        for msg_id in mail_ids:
+        for index, msg_id in enumerate(mail_ids):
             status, msg_data = mail.fetch(msg_id, "(RFC822)")
-            msg = email.message_from_bytes(msg_data[0][1])
+            raw_msg = msg_data[0][1]
+            msg = email.message_from_bytes(raw_msg)
 
-            # 본문 추출
+            # 제목 디코딩
+            raw_subject = msg.get("Subject", "")
+            decoded_subject = decode_header(raw_subject)[0]
+            subject = decoded_subject[0].decode(decoded_subject[1]) if isinstance(decoded_subject[0], bytes) else decoded_subject[0]
+
+            # 보내는 사람
+            name, addr = parseaddr(msg.get("From"))
+            from_field = f"{name} <{addr}>" if name else addr
+
+            # 날짜
+            raw_date = msg.get("Date", "")[:25]
+            try:
+                date_obj = parsedate_to_datetime(raw_date)
+                date_str = date_obj.strftime("%Y-%m-%d")
+            except:
+                date_str = raw_date[:10]
+
+            # 본문
             body = ""
-
             if msg.is_multipart():
                 for part in msg.walk():
                     if part.get_content_type() == "text/plain" and not part.get("Content-Disposition"):
@@ -45,18 +62,40 @@ def summary():
                 charset = msg.get_content_charset() or "utf-8"
                 body = msg.get_payload(decode=True).decode(charset, errors="ignore")
 
-            if not body.strip():
+            body = body.strip()
+            if not body:
                 continue
 
-            # 요약 실행 (입력 길이 제한 포함)
-            result = summarizer(body[:3000], max_length=80, min_length=30, do_sample=False)
-            summaries.append(result[0]["summary_text"])
+            # 요약 실행 (원하는 경우 summary 필드로 따로 추가 가능)
+            summary_text = summarizer(body[:3000], max_length=80, min_length=30, do_sample=False)[0]["summary_text"]
 
-        return jsonify({"summaries": summaries})
+            # 태그 추정 (IMAP에서는 정확한 라벨 정보를 받기 어려움 → 간이 처리)
+            typ, flag_data = mail.fetch(msg_id, "(FLAGS)")
+            flags_bytes = flag_data[0]
+            flags_str = flags_bytes.decode() if isinstance(flags_bytes, bytes) else str(flags_bytes)
+
+            tag = "받은"
+            if "\\Important" in flags_str:
+                tag = "중요"
+            elif "\\Junk" in flags_str or "\\Spam" in flags_str:
+                tag = "스팸"
+
+            emails.append({
+                "id": index + 1,
+                "subject": subject,
+                "from": from_field,
+                "date": date_str,
+                "body": body[:1000],  # 너무 길면 자름
+                "tag": tag,
+                "summary": summary_text 
+            })
+
+        return jsonify({"emails": emails})
 
     except Exception as e:
         print("[❗에러 발생]", str(e))
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/api/test', methods=['POST'])
 def test():
