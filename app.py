@@ -4,6 +4,8 @@ from email.utils import parseaddr, parsedate_to_datetime
 from flask_cors import CORS
 import imaplib
 import email
+import smtplib
+from email.mime.text import MIMEText
 from transformers import pipeline
 
 app = Flask(__name__)
@@ -103,14 +105,46 @@ def test():
     text = data.get("text", "")
     return jsonify({"message": f"✅ 백엔드 정상 작동: {text[:20]}..."})
 
+@app.route("/api/send", methods=["POST"])
+def send_email():
+    try:
+        data = request.get_json()
+        print("✅ 받은 데이터:", data)  # POST 요청이 실제로 왔는지 확인
+
+        sender_email = data["email"]
+        app_password = data["app_password"]
+        to = data["to"]
+        subject = data["subject"]
+        body = data["body"]
+
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = to
+
+        server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+        server.login(sender_email, app_password)
+        server.send_message(msg)
+        server.quit()
+
+        return jsonify({"message": "✅ 메일 전송 성공"}), 200
+
+    except Exception as e:
+        print("[❗메일 전송 실패]", str(e))  # 상세 에러 출력
+        return jsonify({"error": str(e)}), 500
+ 
+
 
 @app.route('/', methods=['GET'])
 def health_check():
     return "✅ 백엔드 정상 작동 중", 200
 
 
+
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5001)
 
 
 
