@@ -21,13 +21,16 @@ def summary():
         data = request.get_json()
         username = data.get("email")
         app_password = data.get("app_password")
-        after_date = data.get("after")  # 👈 새로 추가됨
 
         # 문자열 날짜를 datetime 객체로 변환
+        after_date = data.get("after")
+
         after_dt = None
         if after_date:
             try:
-                after_dt = datetime.fromisoformat(after_date)
+                after_date_clean = after_date.replace("Z", "+00:00")
+                after_dt = datetime.fromisoformat(after_date_clean)
+                after_dt = after_dt.replace(tzinfo=None)
             except Exception as e:
                 print("[⚠️ after_date 파싱 실패]", e)
 
@@ -59,6 +62,7 @@ def summary():
             raw_date = msg.get("Date", "")[:25]
             try:
                 date_obj = parsedate_to_datetime(raw_date)
+                date_obj = date_obj.replace(tzinfo=None)  # ✅ timezone 제거
                 date_str = date_obj.strftime("%Y-%m-%d")
             except:
                 date_obj = None
@@ -85,7 +89,11 @@ def summary():
                 continue
 
             # 요약 실행
-            summary_text = summarizer(body[:3000], max_length=80, min_length=30, do_sample=False)[0]["summary_text"]
+            if len(body) < 50:
+                summary_text = body
+            else:
+                summary_text = summarizer(body[:3000], max_length=80, min_length=30, do_sample=False)[0]["summary_text"]
+
 
             # 태그 추정
             typ, flag_data = mail.fetch(msg_id, "(FLAGS)")
