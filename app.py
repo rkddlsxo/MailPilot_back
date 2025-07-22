@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from flask_cors import CORS
+from datetime import datetime
 import imaplib
 import email
 import smtplib
@@ -20,6 +21,15 @@ def summary():
         data = request.get_json()
         username = data.get("email")
         app_password = data.get("app_password")
+        after_date = data.get("after")  # 👈 새로 추가됨
+
+        # 문자열 날짜를 datetime 객체로 변환
+        after_dt = None
+        if after_date:
+            try:
+                after_dt = datetime.fromisoformat(after_date)
+            except Exception as e:
+                print("[⚠️ after_date 파싱 실패]", e)
 
         mail = imaplib.IMAP4_SSL("imap.gmail.com")
         mail.login(username, app_password)
@@ -51,7 +61,13 @@ def summary():
                 date_obj = parsedate_to_datetime(raw_date)
                 date_str = date_obj.strftime("%Y-%m-%d")
             except:
+                date_obj = None
                 date_str = raw_date[:10]
+
+            # ⛔ 필터링: after_date 이후 메일만 통과
+            if after_dt and date_obj:
+                if date_obj <= after_dt:
+                    continue
 
             # 본문
             body = ""
@@ -68,10 +84,10 @@ def summary():
             if not body:
                 continue
 
-            # 요약 실행 (원하는 경우 summary 필드로 따로 추가 가능)
+            # 요약 실행
             summary_text = summarizer(body[:3000], max_length=80, min_length=30, do_sample=False)[0]["summary_text"]
 
-            # 태그 추정 (IMAP에서는 정확한 라벨 정보를 받기 어려움 → 간이 처리)
+            # 태그 추정
             typ, flag_data = mail.fetch(msg_id, "(FLAGS)")
             flags_bytes = flag_data[0]
             flags_str = flags_bytes.decode() if isinstance(flags_bytes, bytes) else str(flags_bytes)
@@ -87,9 +103,9 @@ def summary():
                 "subject": subject,
                 "from": from_field,
                 "date": date_str,
-                "body": body[:1000],  # 너무 길면 자름
+                "body": body[:1000],
                 "tag": tag,
-                "summary": summary_text 
+                "summary": summary_text
             })
 
         return jsonify({"emails": emails})
