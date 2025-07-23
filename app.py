@@ -27,6 +27,7 @@ CORS(app)
 
 # 요약 모델 로딩
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn", tokenizer="facebook/bart-large-cnn")
+
 @app.route('/api/summary', methods=['POST'])
 def summary():
     try:
@@ -43,6 +44,7 @@ def summary():
                 after_date_clean = after_date.replace("Z", "+00:00")
                 after_dt = datetime.fromisoformat(after_date_clean)
                 after_dt = after_dt.replace(tzinfo=None)
+                print(f"[📅 필터링 기준] {after_dt} 이후 메일만 가져옴")
             except Exception as e:
                 print("[⚠️ after_date 파싱 실패]", e)
 
@@ -51,13 +53,27 @@ def summary():
         mail.login(username, app_password)
         mail.select("inbox")
 
-        N = 5  # 최근 5개 메일만
+        # ✅ 메일 수 동적 결정
+        if after_dt:
+            # 새로고침인 경우: 최근 10개 메일 검색
+            N = 10
+            print(f"[🔄 새로고침] 최근 {N}개 메일에서 {after_dt} 이후 메일 검색")
+        else:
+            # 첫 로딩인 경우: 최근 5개 메일
+            N = 5
+            print(f"[🆕 첫 로딩] 최근 {N}개 메일 가져옴")
+
         status, data = mail.search(None, "ALL")
-        mail_ids = data[0].split()[-N:]
+        all_mail_ids = data[0].split()
+        
+        # ✅ 최신 메일부터 처리하도록 순서 수정
+        mail_ids = all_mail_ids[-N:]  # 마지막 N개
+        mail_ids.reverse()  # 최신 메일이 먼저 오도록 뒤집기
 
         emails = []
+        processed_count = 0
 
-        for index, msg_id in enumerate(mail_ids):
+        for msg_id in mail_ids:
             status, msg_data = mail.fetch(msg_id, "(RFC822)")
             if not msg_data or not msg_data[0]:
                 continue
@@ -78,20 +94,23 @@ def summary():
             name, addr = parseaddr(msg.get("From"))
             from_field = f"{name} <{addr}>" if name else addr
 
-            # 날짜
-            raw_date = msg.get("Date", "")[:25]
+            # 날짜 처리 개선
+            raw_date = msg.get("Date", "")
             try:
                 date_obj = parsedate_to_datetime(raw_date)
                 date_obj = date_obj.replace(tzinfo=None)
-                date_str = date_obj.strftime("%Y-%m-%d")
+                date_str = date_obj.strftime("%Y-%m-%d %H:%M:%S")  # 시간 정보도 포함
             except:
                 date_obj = None
-                date_str = raw_date[:10]
+                date_str = raw_date[:19] if len(raw_date) >= 19 else raw_date
 
-            # after_date 이후 메일만 필터링
+            # ✅ after_date 필터링 로직 개선
             if after_dt and date_obj:
                 if date_obj <= after_dt:
+                    print(f"[⏭️ 건너뛰기] {date_str} (기준: {after_dt})")
                     continue
+                else:
+                    print(f"[✅ 포함] {date_str} - {subject[:30]}...")
 
             # 본문 추출
             body = ""
@@ -106,7 +125,7 @@ def summary():
 
             body = body.strip()
             if not body:
-                body = ""  # 안전하게 빈 문자열로 처리
+                body = ""
 
             # 분류 실행
             try:
@@ -119,17 +138,17 @@ def summary():
                 best_index = scores.argmax()
                 classification_tag = candidate_labels[best_index]
                 confidence = scores[best_index]
-                print("[💩 분류 성공]", classification_tag)
+                print(f"[🏷️ 분류] {classification_tag} (신뢰도: {confidence:.3f})")
             except Exception as e:
                 print("[⚠️ 분류 실패]", str(e))
                 classification_tag = "unknown"
 
-            # 요약 실행 (안전 처리)
+            # 요약 실행
             try:
                 if not body:
                     summary_text = "(본문 없음)"
                 else:
-                    safe_text = body[:1000]  # 모델 입력 제한 준수
+                    safe_text = body[:1000]
                     if len(safe_text) < 50:
                         summary_text = safe_text
                     else:
@@ -157,9 +176,9 @@ def summary():
             elif "\\Junk" in flags_str or "\\Spam" in flags_str:
                 tag = "스팸"
 
-            # 메일 객체 추가
+            # ✅ 메일 객체 추가 (ID를 msg_id 기반으로 생성)
             emails.append({
-                "id": index + 1,
+                "id": int(msg_id.decode()) if isinstance(msg_id, bytes) else int(msg_id),
                 "subject": subject,
                 "from": from_field,
                 "date": date_str,
@@ -168,6 +187,15 @@ def summary():
                 "summary": summary_text,
                 "classification": classification_tag,
             })
+            
+            processed_count += 1
+
+        # ✅ 백엔드에서도 날짜순 정렬 (최신 먼저)
+        emails.sort(key=lambda x: x['date'], reverse=True)
+        
+        print(f"[📊 결과] 총 {processed_count}개 메일 처리 완료")
+        if emails:
+            print(f"[📅 범위] {emails[-1]['date']} ~ {emails[0]['date']}")
 
         return jsonify({"emails": emails})
 
@@ -186,7 +214,7 @@ def test():
 def send_email():
     try:
         data = request.get_json()
-        print("✅ 받은 데이터:", data)  # POST 요청이 실제로 왔는지 확인
+        print("✅ 받은 데이터:", data)
 
         sender_email = data["email"]
         app_password = data["app_password"]
@@ -207,21 +235,12 @@ def send_email():
         return jsonify({"message": "✅ 메일 전송 성공"}), 200
 
     except Exception as e:
-        print("[❗메일 전송 실패]", str(e))  # 상세 에러 출력
+        print("[❗메일 전송 실패]", str(e))
         return jsonify({"error": str(e)}), 500
- 
-
 
 @app.route('/', methods=['GET'])
 def health_check():
     return "✅ 백엔드 정상 작동 중", 200
 
-
-
-
-
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5001)
-
-
-
