@@ -8,6 +8,18 @@ import email
 import smtplib
 from email.mime.text import MIMEText
 from transformers import pipeline
+from nomic import embed
+from sklearn.metrics.pairwise import cosine_similarity
+from nomic import login
+
+login(token="여기에 토큰 작성")
+
+candidate_labels = [
+    "university.",
+    "spam mail.",
+    "company.",
+    "security alert."
+]
 
 app = Flask(__name__)
 CORS(app)
@@ -88,6 +100,23 @@ def summary():
             if not body:
                 continue
 
+            # 분류 실행
+            try:
+                text_inputs = [body] + candidate_labels
+                result = embed.text(text_inputs, model='nomic-embed-text-v1', task_type='classification')
+                embedding_list = result['embeddings']
+                email_embedding = [embedding_list[0]]
+                label_embeddings = embedding_list[1:]
+                scores = cosine_similarity(email_embedding, label_embeddings)[0]
+                best_index = scores.argmax()
+                classification_tag = candidate_labels[best_index]
+                confidence = scores[best_index]
+                print("[💩 분류 성공]",classification_tag)
+            except Exception as e:
+                print("[⚠️ 분류 실패]", str(e))
+                classification_tag = "unknown"
+
+
             # 요약 실행
             if len(body) < 50:
                 summary_text = body
@@ -113,7 +142,8 @@ def summary():
                 "date": date_str,
                 "body": body[:1000],
                 "tag": tag,
-                "summary": summary_text
+                "summary": summary_text,
+                "classification": classification_tag,
             })
 
         return jsonify({"emails": emails})
