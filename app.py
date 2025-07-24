@@ -204,6 +204,79 @@ def summary():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot():
+    try:
+        data = request.get_json()
+        user_input = data.get("user_input", "").strip()
+        email = data.get("email", "")
+        app_password = data.get("app_password", "")
+        
+        print(f"[🤖 챗봇 요청] {user_input}")
+        
+        if not user_input:
+            return jsonify({"error": "입력이 비어있습니다."}), 400
+        
+        # Define candidate labels (기능 라벨)
+        candidate_labels = [
+            "correct the vocabulary, spelling",
+            "image generation using text", 
+            "find something",
+            "email search for a person"
+        ]
+        
+        # Generate embeddings
+        text_inputs = [user_input] + candidate_labels
+        result = embed.text(text_inputs, model='nomic-embed-text-v1', task_type='classification')
+        
+        # Compare embeddings
+        embedding_list = result['embeddings']
+        email_embedding = [embedding_list[0]]
+        label_embeddings = embedding_list[1:]
+        
+        # Cosine Similarity
+        scores = cosine_similarity(email_embedding, label_embeddings)[0]
+        best_index = scores.argmax()
+        best_score = scores[best_index]
+        best_label = candidate_labels[best_index]
+        
+        print(f"[🎯 분류 결과] {best_label} (유사도: {best_score:.4f})")
+        
+        # Threshold decision
+        threshold = 0.3
+        
+        if best_score >= threshold:
+            if best_label == "correct the vocabulary, spelling":
+                response = "📝 문법 및 맞춤법 교정 기능입니다.\n\n교정하고 싶은 텍스트를 입력해주세요. 현재는 기본 응답을 제공하고 있으며, 향후 전문 교정 모델이 추가될 예정입니다."
+                action = "grammar_correction"
+                
+            elif best_label == "image generation using text":
+                response = "🎨 텍스트를 이미지로 변환하는 기능입니다.\n\n생성하고 싶은 이미지에 대한 설명을 입력해주세요. 현재는 기본 응답을 제공하고 있으며, 향후 이미지 생성 모델이 추가될 예정입니다."
+                action = "image_generation"
+                
+            elif best_label == "find something":
+                response = "🔍 특정 키워드가 포함된 메일을 검색하는 기능입니다.\n\n찾고 싶은 키워드나 내용을 알려주세요. 메일 제목, 발신자, 내용에서 검색해드립니다."
+                action = "email_search"
+                
+            elif best_label == "email search for a person":
+                response = "👤 특정 사람의 메일을 검색하는 기능입니다.\n\n찾고 싶은 사람의 이름이나 이메일 주소를 알려주세요."
+                action = "person_search"
+        else:
+            response = "❓ 요청을 정확히 이해하지 못했습니다.\n\n다음 기능들을 이용해보세요:\n• 문법/맞춤법 교정\n• 이미지 생성\n• 메일 검색\n• 특정 사람 메일 찾기"
+            action = "unknown"
+        
+        return jsonify({
+            "response": response,
+            "action": action,
+            "confidence": float(best_score),
+            "detected_intent": best_label
+        }), 200
+        
+    except Exception as e:
+        print("[❗챗봇 오류]", str(e))
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/test', methods=['POST'])
 def test():
     data = request.get_json()
