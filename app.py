@@ -12,8 +12,13 @@ from transformers import pipeline
 from nomic import embed
 from sklearn.metrics.pairwise import cosine_similarity
 from nomic import login
+import os
+from huggingface_hub import InferenceClient
 
 login(token="nk-QV0H1frBySMJ8TH8Vz4_smZsg_iurT-G0EH_HMnrMKg")
+
+# Hugging Face 토큰 설정
+os.environ['HF_TOKEN'] = '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'
 
 candidate_labels = [
     "university.",
@@ -27,6 +32,83 @@ CORS(app)
 
 # 요약 모델 로딩
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn", tokenizer="facebook/bart-large-cnn")
+
+def build_ai_reply_prompt(sender, subject, body):
+    """AI 답장을 위한 프롬프트 생성"""
+    return f"""
+You are a helpful email assistant that writes professional email replies.
+
+Please read the following email and write a polite, professional reply in English:
+
+---
+From: {sender}
+Subject: {subject}
+Body: {body}
+---
+
+Instructions:
+1. Identify the purpose of the email (invitation, question, information request, scheduling, etc.)
+2. Write a concise (3-4 sentences), polite reply that directly addresses the purpose
+3. Use a friendly yet professional tone
+4. Only output the reply text (no analysis, no quotes, no original email content)
+
+Reply:
+""".strip()
+
+@app.route('/api/generate-ai-reply', methods=['POST'])
+def generate_ai_reply():
+    """AI 답장 생성 API"""
+    try:
+        data = request.get_json()
+        sender = data.get('sender', '')
+        subject = data.get('subject', '')
+        body = data.get('body', '')
+        
+        print(f"[🤖 AI 답장 요청] From: {sender}, Subject: {subject[:50]}...")
+        
+        if not all([sender, subject, body]):
+            return jsonify({'error': '발신자, 제목, 본문이 모두 필요합니다.'}), 400
+        
+        # Hugging Face 토큰 확인
+        hf_token = os.getenv("HF_TOKEN")
+        if not hf_token:
+            return jsonify({'error': 'HF_TOKEN 환경 변수가 설정되어 있지 않습니다.'}), 500
+        
+        # InferenceClient 생성
+        client = InferenceClient(
+            model="Qwen/Qwen2.5-7B-Instruct",
+            token=hf_token
+        )
+        
+        # 프롬프트 생성
+        user_prompt = build_ai_reply_prompt(sender, subject, body)
+        
+        # AI 답장 생성
+        messages = [
+            {"role": "system", "content": "You are a helpful email assistant that writes professional email replies."},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        response = client.chat_completion(
+            messages=messages,
+            max_tokens=256,
+            temperature=0.7
+        )
+        
+        # 답장 텍스트 추출
+        ai_reply = response.choices[0].message.content.strip()
+        
+        print(f"[✅ AI 답장 생성 완료] 길이: {len(ai_reply)}자")
+        
+        return jsonify({
+            'success': True,
+            'ai_reply': ai_reply
+        })
+        
+    except Exception as e:
+        print(f"[❗AI 답장 생성 실패] {str(e)}")
+        traceback.print_exc()
+        return jsonify({'error': f'AI 답장 생성 실패: {str(e)}'}), 500
 
 @app.route('/api/summary', methods=['POST'])
 def summary():
