@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from flask_cors import CORS
@@ -13,6 +13,8 @@ from nomic import embed
 from sklearn.metrics.pairwise import cosine_similarity
 from nomic import login
 import os
+import hashlib
+import uuid
 from huggingface_hub import InferenceClient
 
 login(token="nk-QV0H1frBySMJ8TH8Vz4_smZsg_iurT-G0EH_HMnrMKg")
@@ -28,7 +30,28 @@ candidate_labels = [
 ]
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True)  # 세션 쿠키 지원
+app.secret_key = 'your-secret-key-here'  # 세션 암호화용 키
+
+# 사용자별 데이터 저장소 (실제 운영에서는 Redis나 데이터베이스 사용 권장)
+user_sessions = {}
+
+def get_session_id():
+    """세션 ID 생성 또는 가져오기"""
+    if 'session_id' not in session:
+        session['session_id'] = str(uuid.uuid4())
+    return session['session_id']
+
+def get_user_key(email):
+    """이메일 기반 사용자 키 생성"""
+    return hashlib.md5(email.encode()).hexdigest()
+
+def clear_user_session(email):
+    """특정 사용자의 세션 데이터 삭제"""
+    user_key = get_user_key(email)
+    if user_key in user_sessions:
+        del user_sessions[user_key]
+        print(f"[🗑️ 세션 삭제] {email} 사용자 데이터 삭제됨")
 
 # 요약 모델 로딩
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn", tokenizer="facebook/bart-large-cnn")
@@ -55,6 +78,65 @@ Instructions:
 Reply:
 """.strip()
 
+@app.route('/api/login', methods=['POST'])
+def login_user():
+    """사용자 로그인 - 이전 세션 데이터 삭제"""
+    try:
+        data = request.get_json()
+        email = data.get('email', '')
+        
+        if email:
+            # 이전 사용자 데이터 삭제
+            clear_user_session(email)
+            
+            # 새 세션 생성
+            session_id = get_session_id()
+            user_key = get_user_key(email)
+            
+            # 사용자별 세션 초기화
+            user_sessions[user_key] = {
+                'email': email,
+                'session_id': session_id,
+                'last_emails': [],
+                'login_time': datetime.now().isoformat()
+            }
+            
+            print(f"[🔑 로그인] {email} - 새 세션 생성: {session_id[:8]}...")
+            
+            return jsonify({
+                'success': True,
+                'message': '로그인 성공',
+                'session_id': session_id
+            })
+        else:
+            return jsonify({'error': '이메일이 필요합니다.'}), 400
+            
+    except Exception as e:
+        print(f"[❗로그인 실패] {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/logout', methods=['POST'])
+def logout_user():
+    """사용자 로그아웃 - 세션 데이터 삭제"""
+    try:
+        data = request.get_json()
+        email = data.get('email', '')
+        
+        if email:
+            clear_user_session(email)
+            session.clear()  # Flask 세션도 삭제
+            
+            return jsonify({
+                'success': True,
+                'message': '로그아웃 성공'
+            })
+        else:
+            return jsonify({'error': '이메일이 필요합니다.'}), 400
+            
+    except Exception as e:
+        print(f"[❗로그아웃 실패] {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/generate-ai-reply', methods=['POST'])
 def generate_ai_reply():
     """AI 답장 생성 API"""
@@ -63,11 +145,17 @@ def generate_ai_reply():
         sender = data.get('sender', '')
         subject = data.get('subject', '')
         body = data.get('body', '')
+        current_user_email = data.get('email', '')  # 현재 사용자 이메일 추가
         
-        print(f"[🤖 AI 답장 요청] From: {sender}, Subject: {subject[:50]}...")
+        print(f"[🤖 AI 답장 요청] User: {current_user_email}, From: {sender}, Subject: {subject[:50]}...")
         
-        if not all([sender, subject, body]):
-            return jsonify({'error': '발신자, 제목, 본문이 모두 필요합니다.'}), 400
+        if not all([sender, subject, body, current_user_email]):
+            return jsonify({'error': '발신자, 제목, 본문, 사용자 이메일이 모두 필요합니다.'}), 400
+        
+        # 사용자 세션 확인
+        user_key = get_user_key(current_user_email)
+        if user_key not in user_sessions:
+            return jsonify({'error': '로그인이 필요합니다.'}), 401
         
         # Hugging Face 토큰 확인
         hf_token = os.getenv("HF_TOKEN")
@@ -98,7 +186,7 @@ def generate_ai_reply():
         # 답장 텍스트 추출
         ai_reply = response.choices[0].message.content.strip()
         
-        print(f"[✅ AI 답장 생성 완료] 길이: {len(ai_reply)}자")
+        print(f"[✅ AI 답장 생성 완료] User: {current_user_email}, 길이: {len(ai_reply)}자")
         
         return jsonify({
             'success': True,
@@ -117,9 +205,13 @@ def summary():
         username = data.get("email")
         app_password = data.get("app_password")
 
+        # 사용자 키 생성 및 세션 확인
+        user_key = get_user_key(username)
+        
+        print(f"[📧 메일 요청] 사용자: {username}")
+        
         # 문자열 날짜를 datetime 객체로 변환
         after_date = data.get("after")
-
         after_dt = None
         if after_date:
             try:
@@ -135,22 +227,20 @@ def summary():
         mail.login(username, app_password)
         mail.select("inbox")
 
-        # ✅ 메일 수 동적 결정
+        # 메일 수 동적 결정
         if after_dt:
-            # 새로고침인 경우: 최근 10개 메일 검색
             N = 10
             print(f"[🔄 새로고침] 최근 {N}개 메일에서 {after_dt} 이후 메일 검색")
         else:
-            # 첫 로딩인 경우: 최근 5개 메일
             N = 5
             print(f"[🆕 첫 로딩] 최근 {N}개 메일 가져옴")
 
         status, data = mail.search(None, "ALL")
         all_mail_ids = data[0].split()
         
-        # ✅ 최신 메일부터 처리하도록 순서 수정
-        mail_ids = all_mail_ids[-N:]  # 마지막 N개
-        mail_ids.reverse()  # 최신 메일이 먼저 오도록 뒤집기
+        # 최신 메일부터 처리하도록 순서 수정
+        mail_ids = all_mail_ids[-N:]
+        mail_ids.reverse()
 
         emails = []
         processed_count = 0
@@ -176,17 +266,17 @@ def summary():
             name, addr = parseaddr(msg.get("From"))
             from_field = f"{name} <{addr}>" if name else addr
 
-            # 날짜 처리 개선
+            # 날짜 처리
             raw_date = msg.get("Date", "")
             try:
                 date_obj = parsedate_to_datetime(raw_date)
                 date_obj = date_obj.replace(tzinfo=None)
-                date_str = date_obj.strftime("%Y-%m-%d %H:%M:%S")  # 시간 정보도 포함
+                date_str = date_obj.strftime("%Y-%m-%d %H:%M:%S")
             except:
                 date_obj = None
                 date_str = raw_date[:19] if len(raw_date) >= 19 else raw_date
 
-            # ✅ after_date 필터링 로직 개선
+            # after_date 필터링
             if after_dt and date_obj:
                 if date_obj <= after_dt:
                     print(f"[⏭️ 건너뛰기] {date_str} (기준: {after_dt})")
@@ -258,7 +348,7 @@ def summary():
             elif "\\Junk" in flags_str or "\\Spam" in flags_str:
                 tag = "스팸"
 
-            # ✅ 메일 객체 추가 (ID를 msg_id 기반으로 생성)
+            # 메일 객체 추가
             emails.append({
                 "id": int(msg_id.decode()) if isinstance(msg_id, bytes) else int(msg_id),
                 "subject": subject,
@@ -272,14 +362,25 @@ def summary():
             
             processed_count += 1
 
-        # ✅ 백엔드에서도 날짜순 정렬 (최신 먼저)
+        # 백엔드에서도 날짜순 정렬 (최신 먼저)
         emails.sort(key=lambda x: x['date'], reverse=True)
         
-        print(f"[📊 결과] 총 {processed_count}개 메일 처리 완료")
+        # 사용자별 세션에 메일 데이터 저장
+        if user_key not in user_sessions:
+            user_sessions[user_key] = {}
+        
+        user_sessions[user_key]['last_emails'] = emails
+        user_sessions[user_key]['last_update'] = datetime.now().isoformat()
+        
+        print(f"[📊 결과] 사용자: {username}, 총 {processed_count}개 메일 처리 완료")
         if emails:
             print(f"[📅 범위] {emails[-1]['date']} ~ {emails[0]['date']}")
 
-        return jsonify({"emails": emails})
+        return jsonify({
+            "emails": emails,
+            "user_session": user_key[:8] + "...",  # 디버그용
+            "cache_info": f"세션에 {len(emails)}개 메일 저장됨"
+        })
 
     except Exception as e:
         print("[❗에러 발생]", str(e))
@@ -294,10 +395,16 @@ def chatbot():
         email = data.get("email", "")
         app_password = data.get("app_password", "")
         
-        print(f"[🤖 챗봇 요청] {user_input}")
+        print(f"[🤖 챗봇 요청] 사용자: {email}, 입력: {user_input}")
         
         if not user_input:
             return jsonify({"error": "입력이 비어있습니다."}), 400
+        
+        # 사용자 세션 확인
+        user_key = get_user_key(email)
+        if user_key not in user_sessions:
+            print(f"[⚠️ 세션 없음] {email} 사용자의 세션이 없습니다.")
+            return jsonify({"error": "로그인이 필요합니다."}), 401
         
         # Define candidate labels (기능 라벨)
         candidate_labels = [
@@ -322,7 +429,7 @@ def chatbot():
         best_score = scores[best_index]
         best_label = candidate_labels[best_index]
         
-        print(f"[🎯 분류 결과] {best_label} (유사도: {best_score:.4f})")
+        print(f"[🎯 분류 결과] 사용자: {email}, 의도: {best_label} (유사도: {best_score:.4f})")
         
         # Threshold decision
         threshold = 0.3
@@ -351,7 +458,8 @@ def chatbot():
             "response": response,
             "action": action,
             "confidence": float(best_score),
-            "detected_intent": best_label
+            "detected_intent": best_label,
+            "user_session": user_key[:8] + "..."  # 디버그용
         }), 200
         
     except Exception as e:
@@ -363,7 +471,14 @@ def chatbot():
 def test():
     data = request.get_json()
     text = data.get("text", "")
-    return jsonify({"message": f"✅ 백엔드 정상 작동: {text[:20]}..."})
+    email = data.get("email", "")
+    
+    user_key = get_user_key(email) if email else "anonymous"
+    
+    return jsonify({
+        "message": f"✅ 백엔드 정상 작동: {text[:20]}...",
+        "user_session": user_key[:8] + "..." if email else "no_session"
+    })
 
 @app.route("/api/send", methods=["POST"])
 def send_email():
@@ -377,6 +492,11 @@ def send_email():
         subject = data["subject"]
         body = data["body"]
 
+        # 사용자 세션 확인
+        user_key = get_user_key(sender_email)
+        if user_key not in user_sessions:
+            return jsonify({"error": "로그인이 필요합니다."}), 401
+
         msg = MIMEText(body)
         msg["Subject"] = subject
         msg["From"] = sender_email
@@ -387,15 +507,25 @@ def send_email():
         server.send_message(msg)
         server.quit()
 
+        print(f"[📤 메일 전송 성공] 사용자: {sender_email}, 수신자: {to}")
+
         return jsonify({"message": "✅ 메일 전송 성공"}), 200
 
     except Exception as e:
         print("[❗메일 전송 실패]", str(e))
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/session-info', methods=['GET'])
+def session_info():
+    """현재 활성 세션 정보 반환 (디버그용)"""
+    return jsonify({
+        "active_sessions": len(user_sessions),
+        "session_keys": [key[:8] + "..." for key in user_sessions.keys()]
+    })
+
 @app.route('/', methods=['GET'])
 def health_check():
-    return "✅ 백엔드 정상 작동 중", 200
+    return "✅ 백엔드 정상 작동 중 (사용자 세션 분리 적용)", 200
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5001)
