@@ -1,4 +1,4 @@
-MailPilot AI - Backend API
+# MailPilot AI - Backend API
 AI 기반 이메일 관리 서버 (Flask 기반)
 
 로컬 PC 또는 서버에서 실행되는 오픈소스 Flask API 서버로, 이메일 요약, 분류, 검색, AI 답장 생성 및 챗봇 기능을 제공합니다. 클라이언트는 Electron 기반 데스크탑 앱 또는 React 웹에서 요청을 전송합니다.
@@ -33,7 +33,7 @@ AI 기반 이메일 관리 서버 (Flask 기반)
 
 ---
 
-주요 AI 기능 설명
+# 주요 AI 기능 설명
 1. 이메일 요약 및 분류 (/api/summary)
 최근 N개 메일을 가져와 본문 요약 (BART 사용)
 
@@ -98,25 +98,25 @@ Gmail 2단계 인증 필수
 .env 또는 시스템 환경 변수에 Hugging Face 토큰 설정: HF_TOKEN
 
 
-# 1. 레포지토리 클론
+## 1. 레포지토리 클론
 git clone https://github.com/rkddlsxo/MailPilot_back.git
 cd MailPilot_back
 
-# 2. 의존성 설치
+## 2. 의존성 설치
 pip install -r requirements.txt
 
-# 3. 실행
+## 3. 실행
 python app.py
 
 서버는 기본적으로 http://localhost:5001 에서 실행됩니다.
 
-# 4. Nomic/Qwen 모델을 구동하기 위한 패키지 설치
+## 4. Nomic/Qwen 모델을 구동하기 위한 패키지 설치
 
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install transformers accelerate bitsandbytes nomic scikit-learn qai-hub einops safetensors
 
-# 5. 필요한 라이브러리 설치
+## 5. 필요한 라이브러리 설치
 
 !pip install ultralytics
 !pip install opencv-python-headless
@@ -124,7 +124,7 @@ pip install transformers accelerate bitsandbytes nomic scikit-learn qai-hub eino
 !pip install pandas
 !pip install numpy
 
-# 6. 실행/사용 방법
+## 6. 실행/사용 방법
 
 ### 프로젝트 디렉토리로 이동
 cd MailPilot_back
