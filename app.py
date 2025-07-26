@@ -20,12 +20,13 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from pprint import pprint
 import re
 import email as email_module
+import email
 
 
 login(token="nk-QV0H1frBySMJ8TH8Vz4_smZsg_iurT-G0EH_HMnrMKg")
 
 # Hugging Face 토큰 설정
-os.environ['HF_TOKEN'] = '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'
+os.environ['HF_TOKEN'] = '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'
 
 candidate_labels = [
     "university.",
@@ -104,18 +105,16 @@ def extract_search_target_with_qwen(text):
             )
         
         decoded_output = qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-        
+        print("\n Qwen 응답 전체:\n", decoded_output)
         # "assistant" 이후 텍스트만 가져옴
         if "assistant" in decoded_output:
             after_assistant = decoded_output.split("assistant")[-1].strip()
-            
-            # "The user is referring to" 뒷부분만 추출
             prefix = "The user is referring to "
             if prefix in after_assistant:
-                result = after_assistant.split(prefix)[-1].strip().rstrip(".")
+                result = after_assistant.split(prefix)[-1].strip().rstrip(".").strip('"')
                 return result
         
-        return decoded_output.strip()
+
     except Exception as e:
         print(f"[⚠️ Qwen 추출 오류] {str(e)}")
         # 오류 시 간단한 키워드 추출로 fallback
@@ -1017,7 +1016,7 @@ def handle_person_search(user_input, user_email, app_password):
             mail.select("inbox")
             
             # 더 많은 메일 검색
-            N = 100  # 100개로 증가
+            N = 10  # 100개로 증가
             status, data_result = mail.search(None, "ALL")
             all_mail_ids = data_result[0].split()
             mail_ids = all_mail_ids[-N:]
