@@ -84,7 +84,7 @@ venv\Scripts\activate
 pip install flask flask-cors
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install transformers accelerate bitsandbytes scikit-learn qai-hub einops safetensors nomic
-pip install ultralytics opencv-python-headless pillow pandas numpy
+pip install ultralytics opencv-python pillow pandas numpy
 ```
 
 ### 4. 실행
