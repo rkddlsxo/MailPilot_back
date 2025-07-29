@@ -26,7 +26,7 @@ import email
 login(token="nk-QV0H1frBySMJ8TH8Vz4_smZsg_iurT-G0EH_HMnrMKg")
 
 # Hugging Face 토큰 설정
-os.environ['HF_TOKEN'] = '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'
+os.environ['HF_TOKEN'] = 'Hugging Face 토큰을 발급받아서 넣어주세요(''안에다가 넣어주세요)'
 
 candidate_labels = [
     "university.",
