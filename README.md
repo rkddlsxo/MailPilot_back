@@ -85,6 +85,12 @@ pip install flask flask-cors
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install transformers accelerate bitsandbytes scikit-learn qai-hub einops safetensors nomic
 pip install ultralytics opencv-python pillow pandas numpy
+-add-
+pip install pdfplumber PyPDF2 python-docx python-pptx pandas openpyxl easyocr pdf2image
+pip install python-dateutil
+pip install python-dotenv
+
+
 ```
 
 ### 4. 실행
