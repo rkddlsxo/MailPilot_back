@@ -1,4 +1,7 @@
 from flask import Blueprint, request, jsonify, session
+from models.tables import User
+from models.db import db
+
 import uuid
 
 def create_auth_routes(session_manager):
@@ -19,6 +22,11 @@ def create_auth_routes(session_manager):
             
             # 새 세션 ID 생성
             session_id = str(uuid.uuid4())
+
+            # ✅ DB에 사용자 등록 (없을 경우에만)
+            if not User.query.filter_by(email=email).first():
+                db.session.add(User(email=email))
+                db.session.commit()
             
             # 세션 생성 또는 복원
             result = session_manager.create_or_restore_session(email, session_id)

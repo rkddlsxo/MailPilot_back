@@ -1,6 +1,9 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 
+from models.db import db  
+from models.tables import User, Mail, Todo  # 앱 컨텍스트 안에서 사용 예정
+
 # 모듈 임포트
 from config import Config
 from models.ai_models import AIModels
@@ -24,6 +27,9 @@ def create_app():
     # 설정 로드
     config = Config()
     app.config.from_object(config)
+
+     # SQLAlchemy 초기화
+    db.init_app(app)
     
     # CORS 설정
     CORS(app, supports_credentials=True)
@@ -97,12 +103,17 @@ def create_app():
     return app
 
 if __name__ == '__main__':
+    
+
     print("=" * 60)
     print("🚀 모듈화된 메일 시스템 시작")
     print("=" * 60)
     
     app = create_app()
     
+    with app.app_context():
+        db.create_all()
+
     # YOLO 모델 미리 로딩 (선택적)
     print("[🔄 YOLO 모델 사전 로딩 시도...]")
     # ai_models.load_yolo_model()  # 필요시 주석 해제

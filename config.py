@@ -18,13 +18,16 @@ class Config:
     HUGGINGFACE_MODEL = "Qwen/Qwen2.5-7B-Instruct"
     
     # API 토큰 (환경변수에서 가져오기)
-    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'your-nomic-token-here')  # 실제 토큰으로 교체
+    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'nk-4gE_ECBXkdYBHvB9y-VREwPv_BZ_5UoigV7L0s9TIno')  # 실제 토큰으로 교체
     HF_TOKEN = os.getenv('HF_TOKEN', 'your-hf-token-here')  # 실제 토큰으로 교체
     
     # 이메일 설정
     GMAIL_IMAP_SERVER = "imap.gmail.com"
     GMAIL_SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 465
+
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root@localhost/mailpilot'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 캐시 설정
     MAX_CACHE_SIZE = 100
