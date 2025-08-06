@@ -1,20 +1,33 @@
-flask>=2.3.0
-flask-cors>=4.0.0
-torch>=2.4.0
-transformers>=4.35.0
-scikit-learn>=1.3.0
-huggingface-hub>=0.19.0
-ultralytics>=8.0.200
-opencv-python>=4.8.0
-easyocr>=1.7.0
-pillow>=10.0.0
-numpy>=1.24.0
-pandas>=2.0.0
-pdfplumber>=0.9.0
-PyPDF2>=3.0.0
-python-docx>=0.8.11
-python-pptx>=0.6.21
-pdf2image>=1.16.0
-nomic>=1.1.0
-python-dateutil>=2.8.0
-requests>=2.28.0
+# Flask 관련 패키지
+pip install flask>=2.3.0
+pip install flask-cors>=4.0.0
+pip install flask-sqlalchemy
+
+# AI/ML 패키지
+pip install torch>=2.4.0
+pip install transformers>=4.35.0
+pip install scikit-learn>=1.3.0
+pip install huggingface-hub>=0.19.0
+pip install ultralytics>=8.0.200
+
+# 이미지 처리
+pip install opencv-python>=4.8.0
+pip install easyocr>=1.7.0
+pip install pillow>=10.0.0
+
+# 데이터 처리
+pip install numpy>=1.24.0
+pip install pandas>=2.0.0
+
+# 문서 처리
+pip install pdfplumber>=0.9.0
+pip install PyPDF2>=3.0.0
+pip install python-docx>=0.8.11
+pip install python-pptx>=0.6.21
+pip install pdf2image>=1.16.0
+
+# 기타
+pip install nomic>=1.1.0
+pip install python-dateutil>=2.8.0
+pip install requests>=2.28.0
+pip install pymysql
