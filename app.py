@@ -38,7 +38,7 @@ def create_app():
     print("[🔧 모델 및 서비스 초기화]")
     ai_models = AIModels(config)
     session_manager = UserSessionManager(config)
-    email_service = EmailService(config)
+    email_service = EmailService(config, summarizer=ai_models.summarizer)
     attachment_service = AttachmentService(config, ai_models)
     todo_service = TodoService(config)
     chatbot_service = ChatbotService(config, ai_models, email_service)

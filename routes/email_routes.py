@@ -26,7 +26,8 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
                 "subject": mail.subject,
                 "from": mail.from_,
                 "date": mail.date.strftime('%Y-%m-%d %H:%M:%S'),
-                "body": mail.body[:1000]
+                "body": mail.body[:1000],
+                "summary": mail.summary
             } for mail in mails]
 
             return jsonify({

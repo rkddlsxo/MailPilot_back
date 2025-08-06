@@ -9,8 +9,9 @@ from models.db import db
 from models.tables import Mail
 
 class EmailService:
-    def __init__(self, config):
+    def __init__(self, config, summarizer=None):
         self.config = config
+        self.summarizer = summarizer
     
     def connect_imap(self, username, password):
         """IMAP 연결"""
@@ -83,6 +84,26 @@ class EmailService:
             # 본문 추출
             body = self._extract_body(msg)
 
+            # 요약 생성
+            summary_text = ""
+            try:
+                if self.summarizer and body:
+                    safe_text = body[:1000]
+                    if len(safe_text) < 50:
+                        summary_text = safe_text
+                    else:
+                        summary_text = self.summarizer(
+                            safe_text,
+                            max_length=80,
+                            min_length=30,
+                            do_sample=False
+                        )[0]["summary_text"]
+                else:
+                    summary_text = "(요약 없음)"
+            except Exception as e:
+                print(f"[⚠️ 요약 실패] {str(e)}")
+                summary_text = "(요약 실패)"
+
             # 디비 중복체크
             mail_id_str = str(msg_id.decode()) if isinstance(msg_id, bytes) else str(msg_id)
             existing = Mail.query.filter_by(user_email=self.username, mail_id=mail_id_str).first()
@@ -96,7 +117,8 @@ class EmailService:
                     from_=from_field,
                     body=body,
                     raw_message=msg.as_string(),
-                    date=date_obj
+                    date=date_obj,
+                    summary=summary_text
                 )
                 db.session.add(new_mail)
                 db.session.commit()

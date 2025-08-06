@@ -14,6 +14,7 @@ class Mail(db.Model):
     body = db.Column(db.Text)
     raw_message = db.Column(db.Text)
     date = db.Column(db.DateTime)
+    summary = db.Column(db.Text)
 
 class Todo(db.Model):
     __tablename__ = 'todo'
