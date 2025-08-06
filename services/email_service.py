@@ -5,6 +5,8 @@ from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from email.mime.text import MIMEText
 from datetime import datetime
+from models.db import db
+from models.tables import Mail
 
 class EmailService:
     def __init__(self, config):
@@ -33,6 +35,7 @@ class EmailService:
     
     def fetch_emails(self, username, password, count=5, after_date=None):
         """이메일 가져오기"""
+        self.username = username
         mail = self.connect_imap(username, password)
         
         try:
@@ -79,7 +82,27 @@ class EmailService:
             
             # 본문 추출
             body = self._extract_body(msg)
+
+            # 디비 중복체크
+            mail_id_str = str(msg_id.decode()) if isinstance(msg_id, bytes) else str(msg_id)
+            existing = Mail.query.filter_by(user_email=self.username, mail_id=mail_id_str).first()
             
+            # 디비 저장
+            if not existing: 
+                new_mail = Mail(
+                    user_email=self.username,
+                    mail_id=mail_id_str,
+                    subject=subject,
+                    from_=from_field,
+                    body=body,
+                    raw_message=msg.as_string(),
+                    date=date_obj
+                )
+                db.session.add(new_mail)
+                db.session.commit()
+                print(f"[📥 저장 완료] {self.username} → {subject[:30]}...")
+
+
             return {
                 "id": int(msg_id.decode()) if isinstance(msg_id, bytes) else int(msg_id),
                 "subject": subject,

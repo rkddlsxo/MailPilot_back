@@ -3,6 +3,41 @@ from datetime import datetime
 
 def create_email_routes(email_service, ai_models, session_manager, attachment_service):
     email_bp = Blueprint('email', __name__)
+
+
+    @email_bp.route('/api/emails/stored', methods=['POST'])
+    def get_stored_emails():
+        """DB에서 저장된 이메일 조회"""
+        try:
+            data = request.get_json()
+            email = data.get("email")
+
+            if not session_manager.session_exists(email):
+                return jsonify({"error": "로그인이 필요합니다."}), 401
+
+            from models.tables import Mail  # ✅ 필요시 상단으로 이동
+
+            mails = Mail.query.filter_by(user_email=email)\
+                            .order_by(Mail.date.desc())\
+                            .limit(20).all()
+
+            result = [{
+                "id": mail.mail_id,
+                "subject": mail.subject,
+                "from": mail.from_,
+                "date": mail.date.strftime('%Y-%m-%d %H:%M:%S'),
+                "body": mail.body[:1000]
+            } for mail in mails]
+
+            return jsonify({
+                "emails": result,
+                "source": "database",
+                "count": len(result)
+            })
+
+        except Exception as e:
+            print(f"[❗DB 메일 조회 오류] {str(e)}")
+            return jsonify({"error": str(e)}), 500
     
     @email_bp.route('/api/summary', methods=['POST'])
     def get_email_summary():
@@ -257,3 +292,6 @@ def extract_search_target_with_qwen(text, ai_models):
         print(f"[⚠️ Qwen 추출 오류] {str(e)}")
         words = text.split()
         return " ".join(words[-2:]) if len(words) >= 2 else text
+
+
+
