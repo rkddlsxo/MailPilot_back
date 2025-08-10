@@ -1,4 +1,4 @@
-# services/attachment_service.py - 첨부파일 처리 서비스
+# services/attachment_service.py - 완전 수정 버전
 
 import os
 import io
@@ -71,11 +71,62 @@ class AttachmentService:
             'pptx_processing': PPTX_AVAILABLE,
             'xlsx_processing': PANDAS_AVAILABLE,
             'pdf_ocr': PDF2IMAGE_AVAILABLE,
-            'yolo': hasattr(ai_models, 'yolo_available') and ai_models.yolo_available,
-            'ocr': hasattr(ai_models, 'ocr_available') and ai_models.ocr_available
+            'yolo': self._check_yolo_availability(),
+            'ocr': self._check_ocr_availability()
         }
         
         print(f"[📎 첨부파일 서비스 초기화] 사용 가능한 기능: {sum(self.features.values())}/{len(self.features)}")
+        print(f"[📎 상세 기능 체크]")
+        print(f"  - PIL: {PIL_AVAILABLE}")
+        print(f"  - YOLO: {self.features['yolo']}")
+        print(f"  - OCR: {self.features['ocr']}")
+    
+    def _check_yolo_availability(self):
+        """YOLO 모델 사용 가능 여부 확인 - 강화된 버전"""
+        try:
+            print("[🔍 YOLO 가용성 체크 시작]")
+            
+            if not hasattr(self.ai_models, 'yolo_model'):
+                print("[❗YOLO] ai_models에 yolo_model 속성이 없음")
+                return False
+            
+            if self.ai_models.yolo_model is None:
+                print("[❗YOLO] yolo_model이 None - 자동 로딩 시도")
+                if self.ai_models.load_yolo_model():
+                    print("[✅ YOLO] 자동 로딩 성공")
+                    return True
+                else:
+                    print("[❗YOLO] 자동 로딩 실패")
+                    return False
+            
+            # 모델 테스트
+            print("[🧪 YOLO] 모델 테스트 시작")
+            test_image = np.zeros((320, 320, 3), dtype=np.uint8)
+            results = self.ai_models.yolo_model(test_image, conf=0.1, verbose=False)
+            print(f"[✅ YOLO] 테스트 성공 - 결과: {len(results)}개")
+            return True
+            
+        except Exception as e:
+            print(f"[❗YOLO] 체크 오류: {str(e)}")
+            return False
+    
+    def _check_ocr_availability(self):
+        """OCR 모델 사용 가능 여부 확인"""
+        try:
+            if not hasattr(self.ai_models, 'ocr_reader'):
+                return False
+            
+            if self.ai_models.ocr_reader is None:
+                if self.ai_models.load_ocr_model():
+                    return True
+                else:
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            print(f"[❗OCR] 체크 오류: {str(e)}")
+            return False
     
     def process_email_attachments(self, email_message, email_subject, email_id):
         """이메일에서 첨부파일을 추출하고 처리 (캐싱 포함)"""
@@ -95,6 +146,7 @@ class AttachmentService:
                     attachment_info = self._process_single_attachment(part, email_subject)
                     if attachment_info:
                         attachments.append(attachment_info)
+                        print(f"[📎 첨부파일 추가] {attachment_info.get('filename', 'Unknown')} - 타입: {attachment_info.get('type', 'Unknown')}")
         except Exception as e:
             print(f"[❗첨부파일 워킹 오류] {str(e)}")
         
@@ -106,18 +158,22 @@ class AttachmentService:
         return attachments
     
     def _process_single_attachment(self, part, email_subject):
-        """개별 첨부파일 처리"""
+        """개별 첨부파일 처리 - 강화된 버전"""
         try:
             filename = self._decode_filename(part.get_filename())
             if not filename:
+                print("[⚠️ 첨부파일] 파일명이 없음")
                 return None
             
             attachment_data = part.get_payload(decode=True)
             if not attachment_data:
+                print(f"[⚠️ 첨부파일] 데이터가 없음: {filename}")
                 return None
             
             file_ext = Path(filename).suffix.lower()
             mime_type = part.get_content_type()
+            
+            print(f"[📄 첨부파일 분석] {filename} - 확장자: {file_ext}, MIME: {mime_type}, 크기: {len(attachment_data)} bytes")
             
             attachment_info = {
                 'filename': filename,
@@ -127,17 +183,23 @@ class AttachmentService:
             }
             
             # 파일 타입별 처리
-            if file_ext in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'}:
+            if file_ext in {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.webp'} or 'image' in mime_type:
+                print(f"[🖼️ 이미지 파일 감지] {filename}")
                 attachment_info.update(self._process_image(attachment_data, filename))
             elif file_ext == '.pdf' or 'pdf' in mime_type:
+                print(f"[📄 PDF 파일 감지] {filename}")
                 attachment_info.update(self._process_pdf(attachment_data, filename))
             elif file_ext == '.docx' or 'wordprocessingml' in mime_type:
+                print(f"[📝 Word 파일 감지] {filename}")
                 attachment_info.update(self._process_docx(attachment_data, filename))
             elif file_ext == '.pptx' or 'presentationml' in mime_type:
+                print(f"[📊 PowerPoint 파일 감지] {filename}")
                 attachment_info.update(self._process_pptx(attachment_data, filename))
             elif file_ext in ['.xlsx', '.xls'] or 'spreadsheetml' in mime_type:
+                print(f"[📈 Excel 파일 감지] {filename}")
                 attachment_info.update(self._process_xlsx(attachment_data, filename))
             else:
+                print(f"[❓ 기타 파일] {filename}")
                 attachment_info.update({'type': 'other', 'processing_method': 'metadata_only'})
             
             return attachment_info
@@ -146,40 +208,49 @@ class AttachmentService:
             print(f"[❗첨부파일 처리 오류] {filename if 'filename' in locals() else 'Unknown'}: {str(e)}")
             return None
     
-    def _decode_filename(self, filename):
-        """파일명 디코딩"""
-        if not filename:
-            return None
-        
-        try:
-            from email.header import decode_header
-            decoded_parts = decode_header(filename)
-            if decoded_parts and decoded_parts[0]:
-                decoded_filename = decoded_parts[0]
-                if isinstance(decoded_filename[0], bytes):
-                    return decoded_filename[0].decode(decoded_filename[1] or 'utf-8')
-                else:
-                    return decoded_filename[0]
-        except:
-            pass
-        
-        return filename
-    
     def _process_image(self, attachment_data, filename):
-        """이미지 처리 (YOLO + OCR)"""
+        """이미지 처리 (YOLO + OCR) - 완전 개선된 버전"""
+        print(f"[🖼️ 이미지 처리 시작] {filename}")
+        
         try:
             if not PIL_AVAILABLE:
+                print(f"[❗이미지] PIL 사용 불가 - {filename}")
                 return {'type': 'image', 'error': 'PIL not available', 'processing_method': 'disabled'}
             
             # YOLO 객체 인식
             yolo_detections = []
-            if self.features['yolo'] and self.ai_models.load_yolo_model():
-                yolo_detections = self._yolo_detect_objects(attachment_data)
+            yolo_success = False
+            
+            # YOLO 상태 재확인
+            yolo_available = (self.features.get('yolo', False) and 
+                            hasattr(self.ai_models, 'yolo_model') and 
+                            self.ai_models.yolo_model is not None)
+            
+            print(f"[🔍 YOLO 상태 확인] 사용가능: {yolo_available} - {filename}")
+            
+            if yolo_available:
+                print(f"[🤖 YOLO 처리 시작] {filename}")
+                yolo_detections = self._yolo_detect_objects(attachment_data, filename)
+                yolo_success = len(yolo_detections) > 0
+                print(f"[🎯 YOLO 최종 결과] {len(yolo_detections)}개 객체 탐지 - {filename}")
+            else:
+                print(f"[⚠️ YOLO 스킵] 모델 사용 불가 - {filename}")
+                print(f"    - features['yolo']: {self.features.get('yolo', False)}")
+                print(f"    - yolo_model 존재: {hasattr(self.ai_models, 'yolo_model')}")
+                print(f"    - yolo_model None 여부: {getattr(self.ai_models, 'yolo_model', None) is None}")
             
             # OCR 텍스트 추출
             ocr_result = {'text': '', 'success': False}
-            if self.features['ocr'] and self.ai_models.load_ocr_model():
+            ocr_available = (self.features.get('ocr', False) and 
+                           hasattr(self.ai_models, 'ocr_reader') and 
+                           self.ai_models.ocr_reader is not None)
+            
+            if ocr_available:
+                print(f"[📝 OCR 처리 시작] {filename}")
                 ocr_result = self._extract_text_with_ocr(attachment_data, filename)
+                print(f"[📝 OCR 결과] 성공: {ocr_result.get('success')}, 텍스트 길이: {len(ocr_result.get('text', ''))} - {filename}")
+            else:
+                print(f"[⚠️ OCR 스킵] 모델 사용 불가 - {filename}")
             
             result = {
                 'type': 'image',
@@ -188,7 +259,9 @@ class AttachmentService:
                 'object_count': len(yolo_detections),
                 'extracted_text': ocr_result.get('text', ''),
                 'ocr_success': ocr_result.get('success', False),
-                'processing_method': f"YOLO({len(yolo_detections)}) + OCR({ocr_result.get('success', False)})"
+                'processing_method': f"YOLO({len(yolo_detections)}) + OCR({ocr_result.get('success', False)})",
+                'yolo_success': yolo_success,
+                'filename': filename
             }
             
             # 텍스트 요약 생성
@@ -197,52 +270,102 @@ class AttachmentService:
                     ocr_result['text'], filename, 'image_with_text'
                 )
             
+            print(f"[✅ 이미지 처리 완료] {filename} - YOLO: {yolo_success} ({len(yolo_detections)}개), OCR: {ocr_result.get('success', False)}")
             return result
             
         except Exception as e:
-            print(f"[❗이미지 처리 오류] {str(e)}")
-            return {'type': 'image', 'error': str(e), 'processing_method': 'failed'}
+            print(f"[❗이미지 처리 오류] {filename}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return {'type': 'image', 'error': str(e), 'processing_method': 'failed', 'filename': filename}
     
-    def _yolo_detect_objects(self, image_data):
-        """YOLO 객체 인식"""
+    def _yolo_detect_objects(self, image_data, filename):
+        """YOLO 객체 인식 - 디버깅 강화"""
         try:
+            print(f"[🔍 YOLO 추론 시작] {filename}")
+            
+            # 기본 체크
             if not PIL_AVAILABLE:
+                print(f"[❗YOLO] PIL 사용 불가 - {filename}")
                 return []
             
-            # 이미지 로드 및 전처리
+            if self.ai_models.yolo_model is None:
+                print(f"[❗YOLO] 모델이 None - {filename}")
+                return []
+            
+            # 이미지 로드
+            print(f"[📁 이미지 로드] {filename}")
             image = Image.open(io.BytesIO(image_data))
+            original_size = image.size
+            print(f"[📏 이미지 크기] {original_size} - {filename}")
             
             # RGBA → RGB 변환
             if image.mode in ['RGBA', 'LA']:
+                print(f"[🎨 색상 변환] {image.mode} → RGB - {filename}")
                 rgb_image = Image.new('RGB', image.size, (255, 255, 255))
                 rgb_image.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
                 image = rgb_image
             elif image.mode != 'RGB':
+                print(f"[🎨 색상 변환] {image.mode} → RGB - {filename}")
                 image = image.convert('RGB')
             
+            # NumPy 배열 변환
             image_np = np.array(image)
+            print(f"[🔢 NumPy 변환] shape: {image_np.shape}, dtype: {image_np.dtype} - {filename}")
             
-            # YOLO 추론
-            results = self.ai_models.yolo_model(image_np, conf=0.2)
+            # YOLO 모델 실행
+            print(f"[🤖 YOLO 모델 실행 시작] - {filename}")
+            try:
+                results = self.ai_models.yolo_model(image_np, conf=0.1, verbose=False)
+                print(f"[✅ YOLO 모델 실행 완료] 결과 개수: {len(results)} - {filename}")
+            except Exception as model_error:
+                print(f"[❗YOLO 모델 실행 실패] {str(model_error)} - {filename}")
+                return []
             
+            # 결과 처리
             detections = []
-            if len(results) > 0 and results[0].boxes is not None:
-                boxes = results[0].boxes
-                for i in range(len(boxes)):
-                    conf = float(boxes.conf[i].cpu().numpy())
-                    cls = int(boxes.cls[i].cpu().numpy())
-                    class_name = self.ai_models.yolo_model.names[cls]
+            if len(results) > 0:
+                print(f"[📋 YOLO 결과 분석] 첫 번째 결과 타입: {type(results[0])} - {filename}")
+                
+                if hasattr(results[0], 'boxes') and results[0].boxes is not None:
+                    boxes = results[0].boxes
+                    print(f"[📦 탐지 박스] {len(boxes)}개 발견 - {filename}")
                     
-                    detections.append({
-                        'class': class_name,
-                        'confidence': conf,
-                        'class_id': cls
-                    })
+                    for i in range(len(boxes)):
+                        try:
+                            conf = float(boxes.conf[i].cpu().numpy())
+                            cls = int(boxes.cls[i].cpu().numpy())
+                            class_name = self.ai_models.yolo_model.names[cls]
+                            
+                            detections.append({
+                                'class': class_name,
+                                'confidence': conf,
+                                'class_id': cls
+                            })
+                            
+                            print(f"[🎯 객체 탐지] {class_name} (신뢰도: {conf:.3f}) - {filename}")
+                            
+                        except Exception as box_error:
+                            print(f"[❗박스 처리 오류] 인덱스 {i}: {str(box_error)} - {filename}")
+                            continue
+                else:
+                    print(f"[❌ 박스 없음] boxes 속성이 None이거나 없음 - {filename}")
+            else:
+                print(f"[❌ 결과 없음] YOLO 결과가 비어있음 - {filename}")
+            
+            # 신뢰도순 정렬
+            detections.sort(key=lambda x: x['confidence'], reverse=True)
+            
+            print(f"[✅ YOLO 완료] {len(detections)}개 객체 최종 탐지 - {filename}")
+            for det in detections:
+                print(f"  - {det['class']}: {det['confidence']:.3f}")
             
             return detections
             
         except Exception as e:
-            print(f"[❗YOLO 처리 오류] {str(e)}")
+            print(f"[❗YOLO 처리 오류] {filename}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return []
     
     def _extract_text_with_ocr(self, attachment_data, filename):
@@ -284,316 +407,24 @@ class AttachmentService:
             print(f"[❗OCR 오류] {str(e)}")
             return {'text': '', 'success': False, 'error': str(e)}
     
-    def _process_pdf(self, attachment_data, filename):
-        """PDF 처리"""
-        if not PDFPLUMBER_AVAILABLE and not PYPDF2_AVAILABLE:
-            return {'type': 'document_pdf', 'error': 'PDF libraries not available', 'extraction_success': False}
+    def _decode_filename(self, filename):
+        """파일명 디코딩"""
+        if not filename:
+            return None
         
         try:
-            # pdfplumber로 텍스트 추출 시도
-            if PDFPLUMBER_AVAILABLE:
-                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
-                    temp_file.write(attachment_data)
-                    temp_file_path = temp_file.name
-                
-                try:
-                    with pdfplumber.open(temp_file_path) as pdf:
-                        text = ""
-                        for page_num, page in enumerate(pdf.pages):
-                            page_text = page.extract_text()
-                            if page_text:
-                                text += f"\n=== 페이지 {page_num + 1} ===\n{page_text}\n"
-                    
-                    if text.strip():
-                        result = {
-                            'type': 'document_pdf',
-                            'extracted_text': text.strip(),
-                            'extraction_success': True,
-                            'extraction_method': 'pdfplumber',
-                            'pages': len(pdf.pages)
-                        }
-                        
-                        # 문서 요약 생성
-                        result['document_summary'] = self._summarize_document(
-                            text, filename, 'PDF 보고서'
-                        )
-                        
-                        return result
-                        
-                except Exception as e:
-                    print(f"[⚠️ pdfplumber 실패] {str(e)}")
-                finally:
-                    try:
-                        os.unlink(temp_file_path)
-                    except:
-                        pass
-            
-            # PyPDF2로 재시도
-            if PYPDF2_AVAILABLE:
-                return self._process_pdf_fallback(attachment_data, filename)
-            
-            return {'type': 'document_pdf', 'extraction_success': False, 'error': 'No PDF library available'}
-            
-        except Exception as e:
-            print(f"[❗PDF 처리 오류] {str(e)}")
-            return {'type': 'document_pdf', 'error': str(e), 'extraction_success': False}
-    
-    def _process_pdf_fallback(self, attachment_data, filename):
-        """PDF 대체 처리 (PyPDF2)"""
-        try:
-            with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as temp_file:
-                temp_file.write(attachment_data)
-                temp_file_path = temp_file.name
-            
-            with open(temp_file_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                text = ""
-                for page_num, page in enumerate(pdf_reader.pages):
-                    page_text = page.extract_text()
-                    if page_text:
-                        text += f"\n=== 페이지 {page_num + 1} ===\n{page_text}\n"
-            
-            if text.strip():
-                result = {
-                    'type': 'document_pdf',
-                    'extracted_text': text.strip(),
-                    'extraction_success': True,
-                    'extraction_method': 'pypdf2',
-                    'pages': len(pdf_reader.pages)
-                }
-                
-                result['document_summary'] = self._summarize_document(
-                    text, filename, 'PDF 보고서'
-                )
-                
-                return result
-            
-            return {'type': 'document_pdf', 'extraction_success': False}
-            
-        except Exception as e:
-            return {'type': 'document_pdf', 'error': str(e), 'extraction_success': False}
-        finally:
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass
-    
-    def _process_docx(self, attachment_data, filename):
-        """Word 문서 처리"""
-        if not DOCX_AVAILABLE:
-            return {'type': 'document_word', 'error': 'python-docx not available', 'extraction_success': False}
+            from email.header import decode_header
+            decoded_parts = decode_header(filename)
+            if decoded_parts and decoded_parts[0]:
+                decoded_filename = decoded_parts[0]
+                if isinstance(decoded_filename[0], bytes):
+                    return decoded_filename[0].decode(decoded_filename[1] or 'utf-8')
+                else:
+                    return decoded_filename[0]
+        except:
+            pass
         
-        try:
-            with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
-                temp_file.write(attachment_data)
-                temp_file_path = temp_file.name
-            
-            doc = Document(temp_file_path)
-            
-            text = ""
-            for paragraph in doc.paragraphs:
-                if paragraph.text.strip():
-                    text += paragraph.text + "\n"
-            
-            # 표 내용도 추출
-            for table in doc.tables:
-                text += "\n=== 표 데이터 ===\n"
-                for row in table.rows:
-                    row_text = []
-                    for cell in row.cells:
-                        if cell.text.strip():
-                            row_text.append(cell.text.strip())
-                    if row_text:
-                        text += " | ".join(row_text) + "\n"
-            
-            if text.strip():
-                result = {
-                    'type': 'document_word',
-                    'extracted_text': text.strip(),
-                    'extraction_success': True,
-                    'paragraphs': len(doc.paragraphs),
-                    'tables': len(doc.tables)
-                }
-                
-                result['document_summary'] = self._summarize_document(
-                    text, filename, 'Word 문서'
-                )
-                
-                return result
-            
-            return {'type': 'document_word', 'extraction_success': False}
-            
-        except Exception as e:
-            return {'type': 'document_word', 'error': str(e), 'extraction_success': False}
-        finally:
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass
-    
-    def _process_pptx(self, attachment_data, filename):
-        """PowerPoint 처리"""
-        if not PPTX_AVAILABLE:
-            return {'type': 'document_presentation', 'error': 'python-pptx not available', 'extraction_success': False}
-        
-        try:
-            with tempfile.NamedTemporaryFile(suffix='.pptx', delete=False) as temp_file:
-                temp_file.write(attachment_data)
-                temp_file_path = temp_file.name
-            
-            prs = Presentation(temp_file_path)
-            
-            text = ""
-            for slide_num, slide in enumerate(prs.slides):
-                text += f"\n=== 슬라이드 {slide_num + 1} ===\n"
-                
-                for shape in slide.shapes:
-                    if hasattr(shape, "text") and shape.text.strip():
-                        text += shape.text + "\n"
-                    
-                    if hasattr(shape, 'has_table') and shape.has_table:
-                        text += "\n--- 표 ---\n"
-                        table = shape.table
-                        for row in table.rows:
-                            row_text = []
-                            for cell in row.cells:
-                                if cell.text.strip():
-                                    row_text.append(cell.text.strip())
-                            if row_text:
-                                text += " | ".join(row_text) + "\n"
-            
-            if text.strip():
-                result = {
-                    'type': 'document_presentation',
-                    'extracted_text': text.strip(),
-                    'extraction_success': True,
-                    'slides': len(prs.slides)
-                }
-                
-                result['document_summary'] = self._summarize_document(
-                    text, filename, 'PowerPoint 프레젠테이션'
-                )
-                
-                return result
-            
-            return {'type': 'document_presentation', 'extraction_success': False}
-            
-        except Exception as e:
-            return {'type': 'document_presentation', 'error': str(e), 'extraction_success': False}
-        finally:
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass
-    
-    def _process_xlsx(self, attachment_data, filename):
-        """Excel 처리"""
-        if not PANDAS_AVAILABLE:
-            return {'type': 'document_spreadsheet', 'error': 'pandas not available', 'extraction_success': False}
-        
-        try:
-            with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as temp_file:
-                temp_file.write(attachment_data)
-                temp_file_path = temp_file.name
-            
-            xl_file = pd.ExcelFile(temp_file_path)
-            
-            text = ""
-            total_rows = 0
-            
-            for sheet_name in xl_file.sheet_names:
-                df = pd.read_excel(temp_file_path, sheet_name=sheet_name)
-                
-                if not df.empty:
-                    text += f"\n=== 시트: {sheet_name} ===\n"
-                    text += "컬럼: " + " | ".join(str(col) for col in df.columns) + "\n\n"
-                    
-                    for idx, row in df.head(20).iterrows():
-                        row_text = []
-                        for value in row:
-                            if pd.notna(value):
-                                row_text.append(str(value))
-                            else:
-                                row_text.append("")
-                        text += " | ".join(row_text) + "\n"
-                    
-                    total_rows += len(df)
-                    
-                    if len(df) > 20:
-                        text += f"... (총 {len(df)}행 중 처음 20행만 표시)\n"
-            
-            if text.strip():
-                result = {
-                    'type': 'document_spreadsheet',
-                    'extracted_text': text.strip(),
-                    'extraction_success': True,
-                    'sheets': len(xl_file.sheet_names),
-                    'total_rows': total_rows
-                }
-                
-                result['document_summary'] = self._summarize_document(
-                    text, filename, 'Excel 스프레드시트'
-                )
-                
-                return result
-            
-            return {'type': 'document_spreadsheet', 'extraction_success': False}
-            
-        except Exception as e:
-            return {'type': 'document_spreadsheet', 'error': str(e), 'extraction_success': False}
-        finally:
-            try:
-                os.unlink(temp_file_path)
-            except:
-                pass
-    
-    def _summarize_document(self, text, filename, file_type):
-        """문서 요약 생성"""
-        try:
-            if len(text) > 4000:
-                text = text[:4000] + "..."
-            
-            if not self.config.HF_TOKEN:
-                return text[:300] + "..." if len(text) > 300 else text
-            
-            try:
-                client = self.ai_models.get_inference_client()
-                
-                prompt = f"""다음은 '{filename}' 파일의 내용입니다. 이 문서를 요약해주세요.
-
-파일 형식: {file_type}
-내용:
-{text}
-
-요약 지침:
-1. 주요 내용을 3-5개 포인트로 요약
-2. 핵심 키워드와 수치 포함
-3. 150자 이내로 간결하게
-4. 한국어로 응답
-
-요약:"""
-                
-                messages = [
-                    {"role": "system", "content": "당신은 문서 요약 전문가입니다."},
-                    {"role": "user", "content": prompt}
-                ]
-                
-                response = client.chat_completion(
-                    messages=messages,
-                    max_tokens=200,
-                    temperature=0.3
-                )
-                
-                return response.choices[0].message.content.strip()
-                
-            except Exception:
-                # 간단한 요약으로 fallback
-                sentences = text.split('.')
-                important_sentences = [s.strip() for s in sentences[:3] if len(s.strip()) > 10]
-                return '. '.join(important_sentences) + '.' if important_sentences else text[:200] + "..."
-                
-        except Exception as e:
-            return text[:200] + "..." if len(text) > 200 else text
+        return filename
     
     def _manage_cache_size(self):
         """캐시 크기 관리"""
@@ -669,3 +500,388 @@ class AttachmentService:
     def get_available_features(self):
         """사용 가능한 기능 목록 반환"""
         return self.features
+    
+    def _process_pdf(self, attachment_data, filename):
+        """PDF 파일 처리 - 텍스트 추출 및 OCR"""
+        print(f"[📄 PDF 처리 시작] {filename}")
+        
+        try:
+            extracted_text = ""
+            extraction_method = ""
+            extraction_success = False
+            
+            # 1. pdfplumber로 텍스트 추출 시도
+            if PDFPLUMBER_AVAILABLE:
+                print(f"[📖 pdfplumber 추출 시도] {filename}")
+                try:
+                    with pdfplumber.open(io.BytesIO(attachment_data)) as pdf:
+                        pdf_text = ""
+                        for page_num, page in enumerate(pdf.pages):
+                            page_text = page.extract_text()
+                            if page_text:
+                                pdf_text += f"\n--- 페이지 {page_num + 1} ---\n{page_text}"
+                        
+                        if pdf_text.strip():
+                            extracted_text = pdf_text.strip()
+                            extraction_method = "pdfplumber"
+                            extraction_success = True
+                            print(f"[✅ pdfplumber 성공] {len(extracted_text)}자 추출 - {filename}")
+                        else:
+                            print(f"[⚠️ pdfplumber] 텍스트 없음 - {filename}")
+                            
+                except Exception as e:
+                    print(f"[❗pdfplumber 실패] {str(e)} - {filename}")
+            
+            # 2. PyPDF2로 백업 시도 (pdfplumber 실패 시)
+            if not extraction_success and PYPDF2_AVAILABLE:
+                print(f"[📖 PyPDF2 백업 추출 시도] {filename}")
+                try:
+                    reader = PyPDF2.PdfReader(io.BytesIO(attachment_data))
+                    pdf_text = ""
+                    for page_num, page in enumerate(reader.pages):
+                        page_text = page.extract_text()
+                        if page_text:
+                            pdf_text += f"\n--- 페이지 {page_num + 1} ---\n{page_text}"
+                    
+                    if pdf_text.strip():
+                        extracted_text = pdf_text.strip()
+                        extraction_method = "PyPDF2"
+                        extraction_success = True
+                        print(f"[✅ PyPDF2 성공] {len(extracted_text)}자 추출 - {filename}")
+                    else:
+                        print(f"[⚠️ PyPDF2] 텍스트 없음 - {filename}")
+                        
+                except Exception as e:
+                    print(f"[❗PyPDF2 실패] {str(e)} - {filename}")
+            
+            # 3. OCR 시도 (텍스트 추출 실패하거나 결과가 부족한 경우)
+            ocr_text = ""
+            ocr_success = False
+            
+            if (not extraction_success or len(extracted_text) < 100) and PDF2IMAGE_AVAILABLE:
+                print(f"[📷 PDF OCR 시도] {filename}")
+                try:
+                    # PDF를 이미지로 변환
+                    images = convert_from_bytes(attachment_data, dpi=200)
+                    print(f"[🖼️ PDF 변환] {len(images)}페이지 → 이미지 - {filename}")
+                    
+                    ocr_texts = []
+                    for i, image in enumerate(images[:5]):  # 최대 5페이지만 OCR
+                        if self.features.get('ocr') and hasattr(self.ai_models, 'ocr_reader') and self.ai_models.ocr_reader:
+                            try:
+                                image_np = np.array(image)
+                                result = self.ai_models.ocr_reader.readtext(image_np, paragraph=True)
+                                
+                                page_text = ""
+                                for detection in result:
+                                    if len(detection) >= 3 and detection[2] > 0.5:
+                                        page_text += detection[1] + " "
+                                
+                                if page_text.strip():
+                                    ocr_texts.append(f"\n--- OCR 페이지 {i + 1} ---\n{page_text.strip()}")
+                                    print(f"[📝 OCR 페이지 {i + 1}] {len(page_text)}자 추출 - {filename}")
+                            
+                            except Exception as ocr_error:
+                                print(f"[❗OCR 페이지 {i + 1} 실패] {str(ocr_error)} - {filename}")
+                                continue
+                    
+                    if ocr_texts:
+                        ocr_text = "\n".join(ocr_texts)
+                        ocr_success = True
+                        print(f"[✅ PDF OCR 완료] {len(ocr_text)}자 총 추출 - {filename}")
+                        
+                        # 기존 텍스트가 부족하면 OCR 결과로 대체
+                        if not extraction_success or len(extracted_text) < len(ocr_text):
+                            extracted_text = ocr_text
+                            extraction_method = "OCR"
+                            extraction_success = True
+                            
+                except Exception as e:
+                    print(f"[❗PDF OCR 실패] {str(e)} - {filename}")
+            
+            # 결과 구성
+            result = {
+                'type': 'document_pdf',
+                'extracted_text': extracted_text,
+                'text_length': len(extracted_text),
+                'extraction_success': extraction_success,
+                'extraction_method': extraction_method,
+                'ocr_text': ocr_text,
+                'ocr_success': ocr_success,
+                'processing_method': f"PDF텍스트({extraction_method}) + OCR({ocr_success})",
+                'filename': filename
+            }
+            
+            # 텍스트 요약 생성
+            if extraction_success and extracted_text:
+                summary = self._summarize_document(extracted_text, filename, 'pdf_document')
+                result['summary'] = summary
+                result['text_summary'] = summary  # 호환성
+                result['document_summary'] = summary  # API 응답용
+            
+            status = "성공" if extraction_success else "실패"
+            method_info = f"{extraction_method} + OCR" if ocr_success else extraction_method
+            print(f"[✅ PDF 처리 완료] {filename} - {status} ({method_info}), {len(extracted_text)}자")
+            
+            return result
+            
+        except Exception as e:
+            print(f"[❗PDF 처리 오류] {filename}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'type': 'document_pdf',
+                'error': str(e),
+                'processing_method': 'failed',
+                'extraction_success': False,
+                'filename': filename
+            }
+
+    def _process_docx(self, attachment_data, filename):
+        """Word 문서 처리"""
+        print(f"[📝 Word 처리 시작] {filename}")
+        
+        try:
+            if not DOCX_AVAILABLE:
+                return {
+                    'type': 'document_word',
+                    'error': 'python-docx not available',
+                    'processing_method': 'disabled',
+                    'filename': filename
+                }
+            
+            doc = Document(io.BytesIO(attachment_data))
+            
+            # 텍스트 추출
+            full_text = []
+            for paragraph in doc.paragraphs:
+                if paragraph.text.strip():
+                    full_text.append(paragraph.text)
+            
+            # 표 내용 추출
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = []
+                    for cell in row.cells:
+                        if cell.text.strip():
+                            row_text.append(cell.text.strip())
+                    if row_text:
+                        full_text.append(" | ".join(row_text))
+            
+            extracted_text = "\n".join(full_text)
+            extraction_success = bool(extracted_text.strip())
+            
+            result = {
+                'type': 'document_word',
+                'extracted_text': extracted_text,
+                'text_length': len(extracted_text),
+                'extraction_success': extraction_success,
+                'extraction_method': 'python-docx',
+                'processing_method': 'DOCX parser',
+                'filename': filename
+            }
+            
+            # 요약 생성
+            if extraction_success:
+                result['summary'] = self._summarize_document(
+                    extracted_text, filename, 'word_document'
+                )
+                result['text_summary'] = result['summary']
+            
+            print(f"[✅ Word 처리 완료] {filename} - {len(extracted_text)}자 추출")
+            return result
+            
+        except Exception as e:
+            print(f"[❗Word 처리 오류] {filename}: {str(e)}")
+            return {
+                'type': 'document_word',
+                'error': str(e),
+                'processing_method': 'failed',
+                'extraction_success': False,
+                'filename': filename
+            }
+
+    def _process_pptx(self, attachment_data, filename):
+        """PowerPoint 문서 처리"""
+        print(f"[📊 PowerPoint 처리 시작] {filename}")
+        
+        try:
+            if not PPTX_AVAILABLE:
+                return {
+                    'type': 'document_presentation',
+                    'error': 'python-pptx not available',
+                    'processing_method': 'disabled',
+                    'filename': filename
+                }
+            
+            prs = Presentation(io.BytesIO(attachment_data))
+            
+            # 텍스트 추출
+            full_text = []
+            for slide_num, slide in enumerate(prs.slides, 1):
+                slide_text = [f"\n--- 슬라이드 {slide_num} ---"]
+                
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text.strip():
+                        slide_text.append(shape.text.strip())
+                
+                if len(slide_text) > 1:  # 헤더 외에 텍스트가 있는 경우
+                    full_text.extend(slide_text)
+            
+            extracted_text = "\n".join(full_text)
+            extraction_success = bool(extracted_text.strip())
+            
+            result = {
+                'type': 'document_presentation',
+                'extracted_text': extracted_text,
+                'text_length': len(extracted_text),
+                'slide_count': len(prs.slides),
+                'extraction_success': extraction_success,
+                'extraction_method': 'python-pptx',
+                'processing_method': 'PPTX parser',
+                'filename': filename
+            }
+            
+            # 요약 생성
+            if extraction_success:
+                result['summary'] = self._summarize_document(
+                    extracted_text, filename, 'presentation'
+                )
+                result['text_summary'] = result['summary']
+            
+            print(f"[✅ PowerPoint 처리 완료] {filename} - {len(prs.slides)}슬라이드, {len(extracted_text)}자 추출")
+            return result
+            
+        except Exception as e:
+            print(f"[❗PowerPoint 처리 오류] {filename}: {str(e)}")
+            return {
+                'type': 'document_presentation',
+                'error': str(e),
+                'processing_method': 'failed',
+                'extraction_success': False,
+                'filename': filename
+            }
+
+    def _process_xlsx(self, attachment_data, filename):
+        """Excel 문서 처리"""
+        print(f"[📈 Excel 처리 시작] {filename}")
+        
+        try:
+            if not PANDAS_AVAILABLE:
+                return {
+                    'type': 'document_spreadsheet',
+                    'error': 'pandas not available',
+                    'processing_method': 'disabled',
+                    'filename': filename
+                }
+            
+            # Excel 파일 읽기
+            excel_file = pd.ExcelFile(io.BytesIO(attachment_data))
+            
+            full_text = []
+            sheet_info = []
+            
+            for sheet_name in excel_file.sheet_names:
+                try:
+                    df = pd.read_excel(excel_file, sheet_name=sheet_name)
+                    
+                    # 시트 정보 저장
+                    sheet_info.append({
+                        'name': sheet_name,
+                        'rows': len(df),
+                        'columns': len(df.columns)
+                    })
+                    
+                    # 텍스트 변환
+                    full_text.append(f"\n--- 시트: {sheet_name} ---")
+                    
+                    # 컬럼 헤더
+                    if not df.empty:
+                        full_text.append("컬럼: " + " | ".join(str(col) for col in df.columns))
+                        
+                        # 데이터 (최대 10행만)
+                        for idx, row in df.head(10).iterrows():
+                            row_data = []
+                            for val in row:
+                                if pd.notna(val):
+                                    row_data.append(str(val))
+                                else:
+                                    row_data.append("")
+                            full_text.append(" | ".join(row_data))
+                        
+                        if len(df) > 10:
+                            full_text.append(f"... (총 {len(df)}행)")
+                            
+                except Exception as sheet_error:
+                    print(f"[❗시트 처리 오류] {sheet_name}: {str(sheet_error)} - {filename}")
+                    continue
+            
+            extracted_text = "\n".join(full_text)
+            extraction_success = bool(extracted_text.strip())
+            
+            result = {
+                'type': 'document_spreadsheet',
+                'extracted_text': extracted_text,
+                'text_length': len(extracted_text),
+                'sheet_info': sheet_info,
+                'sheet_count': len(excel_file.sheet_names),
+                'extraction_success': extraction_success,
+                'extraction_method': 'pandas',
+                'processing_method': 'Excel parser',
+                'filename': filename
+            }
+            
+            # 요약 생성
+            if extraction_success:
+                result['summary'] = self._summarize_document(
+                    extracted_text, filename, 'spreadsheet'
+                )
+                result['text_summary'] = result['summary']
+            
+            print(f"[✅ Excel 처리 완료] {filename} - {len(excel_file.sheet_names)}시트, {len(extracted_text)}자 추출")
+            return result
+            
+        except Exception as e:
+            print(f"[❗Excel 처리 오류] {filename}: {str(e)}")
+            return {
+                'type': 'document_spreadsheet',
+                'error': str(e),
+                'processing_method': 'failed',
+                'extraction_success': False,
+                'filename': filename
+            }
+
+    def _summarize_document(self, text, filename, document_type):
+        """문서 요약 생성"""
+        try:
+            if not text or len(text.strip()) < 50:
+                return "텍스트가 너무 짧아 요약할 수 없습니다."
+            
+            # 간단한 키워드 기반 요약 (실제로는 AI 모델 사용 권장)
+            lines = text.split('\n')
+            important_lines = []
+            
+            # 키워드가 포함된 라인 찾기
+            keywords = ['문제', '답', '해답', '정답', '점수', '총점', '기말고사', '중간고사', 
+                    '시험', '과제', '데이터베이스', 'database', 'sql', 'query']
+            
+            for line in lines:
+                line = line.strip()
+                if len(line) > 10 and any(keyword in line.lower() for keyword in keywords):
+                    important_lines.append(line)
+                    if len(important_lines) >= 5:  # 최대 5줄
+                        break
+            
+            if important_lines:
+                return f"{filename} 주요 내용:\n" + "\n".join(f"• {line[:100]}..." if len(line) > 100 else f"• {line}" for line in important_lines)
+            else:
+                # 키워드가 없으면 첫 3줄 요약
+                summary_lines = [line.strip() for line in lines[:3] if line.strip()]
+                if summary_lines:
+                    return f"{filename} 시작 부분:\n" + "\n".join(f"• {line[:100]}..." if len(line) > 100 else f"• {line}" for line in summary_lines)
+                else:
+                    return f"{filename}: 문서 내용을 분석했지만 의미있는 요약을 생성할 수 없습니다."
+                    
+        except Exception as e:
+            print(f"[❗요약 생성 오류] {filename}: {str(e)}")
+            return f"{filename}: 요약 생성 중 오류가 발생했습니다."
