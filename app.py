@@ -45,10 +45,10 @@ def create_app():
     
     print("[🛣️ 라우트 등록]")
     # 라우트 등록
-    auth_routes = create_auth_routes(session_manager)
+    auth_routes = create_auth_routes(session_manager, ai_models)
     app.register_blueprint(auth_routes)
     
-    email_routes = create_email_routes(email_service, ai_models, session_manager, attachment_service)
+    email_routes = create_email_routes(email_service, ai_models, session_manager, attachment_service, todo_service)
     app.register_blueprint(email_routes)
     
     todo_routes = create_todo_routes(session_manager, todo_service)

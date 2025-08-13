@@ -2,7 +2,6 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from ultralytics import YOLO
 import easyocr
-from huggingface_hub import InferenceClient
 from nomic import embed, login
 import os
 
@@ -45,12 +44,25 @@ class AIModels:
                     self.config.QWEN_MODEL, 
                     trust_remote_code=True
                 )
-                self.qwen_model = AutoModelForCausalLM.from_pretrained(
-                    self.config.QWEN_MODEL,
-                    device_map="auto",
-                    torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                    trust_remote_code=True
-                )
+                # Meta Device 오류 방지를 위한 안전한 로딩
+                if torch.cuda.is_available():
+                    # GPU 사용 가능한 경우
+                    self.qwen_model = AutoModelForCausalLM.from_pretrained(
+                        self.config.QWEN_MODEL,
+                        torch_dtype=torch.float16,
+                        trust_remote_code=True,
+                        device_map=None  # auto 대신 None 사용
+                    )
+                    self.qwen_model.to("cuda")
+                else:
+                    # CPU만 사용하는 경우 (Meta Device 문제 방지)
+                    self.qwen_model = AutoModelForCausalLM.from_pretrained(
+                        self.config.QWEN_MODEL,
+                        torch_dtype=torch.float32,  # CPU에서는 float32 필수
+                        trust_remote_code=True,
+                        low_cpu_mem_usage=True  # 메모리 절약
+                    )
+                    self.qwen_model.to("cpu")
                 self.qwen_model.eval()
                 print("[✅ Qwen 모델 로딩 완료]")
                 return True
@@ -73,27 +85,10 @@ class AIModels:
         return True
     
     def load_summarizer(self):
-        """요약 모델 로딩"""
-        if self.summarizer is None:
-            try:
-                self.summarizer = pipeline(
-                    "summarization", 
-                    model="facebook/bart-large-cnn", 
-                    tokenizer="facebook/bart-large-cnn"
-                )
-                print("[✅ 요약 모델 로딩 완료]")
-                return True
-            except Exception as e:
-                print(f"[❗요약 모델 로딩 실패] {str(e)}")
-                return False
-        return True
+        """요약 모델 로딩 (비활성화 - Qwen 사용)"""
+        print("[ℹ️ BART 요약 모델 비활성화됨 - Qwen 사용]")
+        return False  # 항상 False 반환하여 Qwen 사용 강제
     
-    def get_inference_client(self):
-        """HuggingFace Inference Client 생성"""
-        return InferenceClient(
-            model=self.config.HUGGINGFACE_MODEL,
-            token=self.config.HF_TOKEN
-        )
     
     def classify_email(self, text):
         """이메일 분류"""

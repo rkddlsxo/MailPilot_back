@@ -52,26 +52,30 @@ class TodoService:
             full_text = f"{email_subject} {email_body}"
             todos = []
             
-            # 고유 ID 생성을 위한 기준 시간
+            # 고유 ID 생성을 위한 기준 시간과 카운터
             base_timestamp = int(time.time() * 1000)
+            todo_counter = 0
             
             # 1. 회의/미팅 추출
             try:
-                meeting_todos = self._extract_meetings(full_text, email_from, email_date, email_subject, base_timestamp)
+                meeting_todos = self._extract_meetings(full_text, email_from, email_date, email_subject, base_timestamp, todo_counter)
                 todos.extend(meeting_todos)
+                todo_counter += len(meeting_todos)
             except Exception as e:
                 print(f"[⚠️ 회의 추출 오류] {str(e)}")
 
             # 2. 마감일/데드라인 추출  
-            deadline_todos = self._extract_deadlines(full_text, email_from, email_date, email_subject, base_timestamp + 100)
+            deadline_todos = self._extract_deadlines(full_text, email_from, email_date, email_subject, base_timestamp, todo_counter)
             todos.extend(deadline_todos)
+            todo_counter += len(deadline_todos)
             
             # 3. 일반 할일 추출
-            task_todos = self._extract_general_tasks(full_text, email_from, email_date, email_subject, base_timestamp + 200)
+            task_todos = self._extract_general_tasks(full_text, email_from, email_date, email_subject, base_timestamp, todo_counter)
             todos.extend(task_todos)
+            todo_counter += len(task_todos)
             
             # 4. 이벤트/행사 추출
-            event_todos = self._extract_events(full_text, email_from, email_date, email_subject, base_timestamp + 300)
+            event_todos = self._extract_events(full_text, email_from, email_date, email_subject, base_timestamp, todo_counter)
             todos.extend(event_todos)
             
             # 중복 제거 및 우선순위 설정
@@ -95,7 +99,7 @@ class TodoService:
                 'error': str(e)
             }
     
-    def _extract_meetings(self, text, sender, email_date, email_subject, base_id):
+    def _extract_meetings(self, text, sender, email_date, email_subject, base_timestamp, counter_start):
         """회의/미팅 추출"""
         meetings = []
         
@@ -106,7 +110,7 @@ class TodoService:
                 meeting_time = self._extract_smart_time(text) or '14:00'
                 
                 meeting = {
-                    'id': base_id + len(meetings),
+                    'id': base_timestamp + counter_start + len(meetings),
                     'type': 'meeting',
                     'title': meeting_title,
                     'description': f"{sender}님과의 {keyword}",
@@ -128,7 +132,7 @@ class TodoService:
         
         return meetings
     
-    def _extract_deadlines(self, text, sender, email_date, email_subject, base_id):
+    def _extract_deadlines(self, text, sender, email_date, email_subject, base_timestamp, counter_start):
         """마감일 추출"""
         deadlines = []
         
@@ -138,7 +142,7 @@ class TodoService:
                 deadline_date = self._extract_smart_date(text) or '2024-12-28'
                 
                 deadline = {
-                    'id': base_id + len(deadlines),
+                    'id': base_timestamp + counter_start + len(deadlines),
                     'type': 'deadline',
                     'title': deadline_title,
                     'description': f"{sender}님이 요청한 마감 업무",
@@ -160,7 +164,7 @@ class TodoService:
         
         return deadlines
     
-    def _extract_general_tasks(self, text, sender, email_date, email_subject, base_id):
+    def _extract_general_tasks(self, text, sender, email_date, email_subject, base_timestamp, counter_start):
         """일반 업무 추출"""
         tasks = []
         
@@ -188,7 +192,7 @@ class TodoService:
                     clean_title = self._clean_task_title(task_name)
                     
                     task = {
-                        'id': base_id + len(tasks),
+                        'id': base_timestamp + counter_start + len(tasks),
                         'type': 'task',
                         'title': clean_title,
                         'description': f"{sender}님이 요청한 업무",
@@ -212,7 +216,7 @@ class TodoService:
         
         return tasks
     
-    def _extract_events(self, text, sender, email_date, email_subject, base_id):
+    def _extract_events(self, text, sender, email_date, email_subject, base_timestamp, counter_start):
         """이벤트 추출"""
         events = []
         
@@ -221,7 +225,7 @@ class TodoService:
                 event_title = self._generate_smart_title(text, keyword, email_subject, 'event')
                 
                 event = {
-                    'id': base_id + len(events),
+                    'id': base_timestamp + counter_start + len(events),
                     'type': 'event',
                     'title': event_title,
                     'description': f"{sender}님이 알린 {keyword}",
@@ -352,17 +356,19 @@ class TodoService:
         return clean_title
     
     def _deduplicate_todos(self, todos):
-        """중복 제거"""
-        seen_titles = set()
+        """중복 제거 - 제목과 타입으로 더 정확한 중복 검사"""
+        seen_todos = set()
         unique_todos = []
         
         for todo in todos:
-            title_key = todo['title'].lower()
-            if title_key not in seen_titles:
-                seen_titles.add(title_key)
+            # 제목과 타입을 조합한 더 정확한 중복 검사
+            todo_key = f"{todo['title'].lower().strip()}_{todo['type']}"
+            
+            if todo_key not in seen_todos:
+                seen_todos.add(todo_key)
                 unique_todos.append(todo)
             else:
-                print(f"[🗑️ 중복 제거] {todo['title']}")
+                print(f"[🗑️ 중복 제거] {todo['title']} ({todo['type']})")
         
         return unique_todos
     

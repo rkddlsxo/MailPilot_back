@@ -30,8 +30,6 @@ class UserSessionManager:
             
             save_data = {
                 'user_email': user_email,
-                'extracted_todos': session_data.get('extracted_todos', []),
-                'last_emails': session_data.get('last_emails', []),
                 'last_update': datetime.now().isoformat(),
                 'login_time': session_data.get('login_time'),
                 'session_id': session_data.get('session_id')
@@ -40,8 +38,7 @@ class UserSessionManager:
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(save_data, f, ensure_ascii=False, indent=2)
             
-            todos_count = len(session_data.get('extracted_todos', []))
-            print(f"[💾 세션 저장] {user_email}: {todos_count}개 할일")
+            print(f"[💾 세션 저장] {user_email}: 기본 세션 정보만 저장 (DB 중심)")
             return True
             
         except Exception as e:
@@ -61,9 +58,14 @@ class UserSessionManager:
                 data = json.load(f)
             
             if data.get('user_email') == user_email:
-                todos_count = len(data.get('extracted_todos', []))
-                print(f"[📂 세션 복원] {user_email}: {todos_count}개 할일")
-                return data
+                print(f"[📂 세션 복원] {user_email}: DB 중심 구조로 할일 데이터 무시")
+                # extracted_todos 제거하고 기본 세션 데이터만 복원
+                clean_data = {
+                    'user_email': user_email,
+                    'login_time': data.get('login_time'),
+                    'session_id': data.get('session_id')
+                }
+                return clean_data
                 
             return None
             
@@ -80,40 +82,26 @@ class UserSessionManager:
             print(f"[🗑️ 세션 정리] {email} - 파일 저장 후 메모리 정리")
     
     def create_or_restore_session(self, email, session_id):
-        """세션 생성 또는 복원"""
+        """세션 생성 또는 복원 (DB 중심 구조)"""
         user_key = self.get_user_key(email)
         saved_data = self.load_user_session_from_file(email)
         
+        # 간단한 세션 데이터만 유지 (인증 목적)
+        self.user_sessions[user_key] = {
+            'email': email,
+            'session_id': session_id,
+            'login_time': datetime.now().isoformat()
+        }
+        
         if saved_data:
-            # 파일에서 복원
-            self.user_sessions[user_key] = {
-                'email': email,
-                'session_id': session_id,
-                'extracted_todos': saved_data.get('extracted_todos', []),
-                'last_emails': saved_data.get('last_emails', []),
-                'login_time': datetime.now().isoformat()
-            }
-            
-            todos_count = len(saved_data.get('extracted_todos', []))
             return {
                 'restored': True,
-                'todos_count': todos_count,
-                'message': f'로그인 성공 - {todos_count}개 할일 복원됨'
+                'message': '로그인 성공 - DB에서 데이터 로드'
             }
         else:
-            # 새 세션 생성
-            self.user_sessions[user_key] = {
-                'email': email,
-                'session_id': session_id,
-                'last_emails': [],
-                'extracted_todos': [],
-                'login_time': datetime.now().isoformat()
-            }
-            
             return {
                 'restored': False,
-                'todos_count': 0,
-                'message': '로그인 성공 - 새 세션'
+                'message': '로그인 성공 - 새 사용자'
             }
     
     def get_session(self, email):

@@ -71,8 +71,8 @@ class AttachmentService:
             'pptx_processing': PPTX_AVAILABLE,
             'xlsx_processing': PANDAS_AVAILABLE,
             'pdf_ocr': PDF2IMAGE_AVAILABLE,
-            'yolo': hasattr(ai_models, 'yolo_available') and ai_models.yolo_available,
-            'ocr': hasattr(ai_models, 'ocr_available') and ai_models.ocr_available
+            'yolo': hasattr(ai_models, 'load_yolo_model'),
+            'ocr': hasattr(ai_models, 'load_ocr_model')
         }
         
         print(f"[📎 첨부파일 서비스 초기화] 사용 가능한 기능: {sum(self.features.values())}/{len(self.features)}")
@@ -178,8 +178,13 @@ class AttachmentService:
             
             # OCR 텍스트 추출
             ocr_result = {'text': '', 'success': False}
+            print(f"[🔍 OCR 체크] features['ocr']: {self.features['ocr']}")
             if self.features['ocr'] and self.ai_models.load_ocr_model():
+                print(f"[🔍 OCR 시작] {filename}")
                 ocr_result = self._extract_text_with_ocr(attachment_data, filename)
+                print(f"[🔍 OCR 결과] success: {ocr_result.get('success')}, text length: {len(ocr_result.get('text', ''))}")
+            else:
+                print(f"[⚠️ OCR 건너뜀] features['ocr']: {self.features['ocr']}")
             
             result = {
                 'type': 'image',
@@ -223,7 +228,7 @@ class AttachmentService:
             image_np = np.array(image)
             
             # YOLO 추론
-            results = self.ai_models.yolo_model(image_np, conf=0.2)
+            results = self.ai_models.yolo_model(image_np, conf=0.5)
             
             detections = []
             if len(results) > 0 and results[0].boxes is not None:
@@ -249,39 +254,69 @@ class AttachmentService:
         """OCR 텍스트 추출"""
         try:
             if not PIL_AVAILABLE:
+                print(f"[❗OCR] PIL 사용 불가능")
                 return {'text': '', 'success': False, 'error': 'PIL not available'}
             
+            print(f"[🔍 OCR 시작] 파일명: {filename}, 데이터 크기: {len(attachment_data)} bytes")
+            
             image = Image.open(io.BytesIO(attachment_data))
+            print(f"[🔍 OCR] 원본 이미지 모드: {image.mode}, 크기: {image.size}")
             
             # 이미지 전처리
             if image.mode in ['RGBA', 'LA']:
+                print(f"[🔍 OCR] 이미지 모드 변환: {image.mode} -> RGB")
                 rgb_image = Image.new('RGB', image.size, (255, 255, 255))
                 rgb_image.paste(image, mask=image.split()[-1] if image.mode == 'RGBA' else None)
                 image = rgb_image
             elif image.mode != 'RGB':
+                print(f"[🔍 OCR] 이미지 모드 변환: {image.mode} -> RGB")
                 image = image.convert('RGB')
             
+            print(f"[🔍 OCR] 최종 이미지 모드: {image.mode}, 크기: {image.size}")
             image_np = np.array(image)
+            print(f"[🔍 OCR] numpy 배열 형태: {image_np.shape}, dtype: {image_np.dtype}")
             
             # OCR 수행
-            result = self.ai_models.ocr_reader.readtext(image_np, paragraph=True)
+            print(f"[🔍 OCR] EasyOCR 텍스트 추출 시작...")
+            result = self.ai_models.ocr_reader.readtext(image_np, detail=1, paragraph=False)
+            print(f"[🔍 OCR] EasyOCR 원본 결과 개수: {len(result)}")
+            
+            if result:
+                print(f"[🔍 OCR] 첫 번째 결과 예시: {result[0] if result else 'None'}")
             
             text = ""
-            for detection in result:
+            confident_detections = 0
+            for i, detection in enumerate(result):
+                print(f"[🔍 OCR] 탐지 {i+1}: {detection}")
                 if len(detection) >= 3:
                     text_content = detection[1]
                     confidence = detection[2]
-                    if confidence > 0.5:
+                    print(f"[🔍 OCR] 텍스트: '{text_content}', 신뢰도: {confidence:.3f}")
+                    if confidence > 0.3:
                         text += text_content + " "
+                        confident_detections += 1
+                        print(f"[✅ OCR] 추가됨 (신뢰도 {confidence:.3f}): {text_content}")
+                    else:
+                        print(f"[❌ OCR] 낮은 신뢰도로 제외: {text_content}")
+            
+            final_text = text.strip()
+            success = bool(final_text)
+            
+            print(f"[🔍 OCR 최종 결과] 성공: {success}, 신뢰도 높은 탐지: {confident_detections}, 최종 텍스트 길이: {len(final_text)}")
+            print(f"[🔍 OCR 최종 텍스트] '{final_text[:100]}{'...' if len(final_text) > 100 else ''}'")
             
             return {
-                'text': text.strip(),
-                'success': bool(text.strip()),
-                'method': 'ocr'
+                'text': final_text,
+                'success': success,
+                'method': 'ocr',
+                'total_detections': len(result),
+                'confident_detections': confident_detections
             }
             
         except Exception as e:
-            print(f"[❗OCR 오류] {str(e)}")
+            print(f"[❗OCR 예외] {str(e)}")
+            import traceback
+            print(f"[❗OCR 스택트레이스] {traceback.format_exc()}")
             return {'text': '', 'success': False, 'error': str(e)}
     
     def _process_pdf(self, attachment_data, filename):
@@ -548,18 +583,19 @@ class AttachmentService:
                 pass
     
     def _summarize_document(self, text, filename, file_type):
-        """문서 요약 생성"""
+        """문서 요약 생성 (Qwen 1.5-1.8B 모델 사용)"""
         try:
-            if len(text) > 4000:
-                text = text[:4000] + "..."
+            if len(text) > 600:
+                text = text[:600]
             
-            if not self.config.HF_TOKEN:
-                return text[:300] + "..." if len(text) > 300 else text
-            
-            try:
-                client = self.ai_models.get_inference_client()
-                
-                prompt = f"""다음은 '{filename}' 파일의 내용입니다. 이 문서를 요약해주세요.
+            # Qwen 모델로 요약 시도
+            if self.ai_models.load_qwen_model():
+                try:
+                    prompt = f"""<|im_start|>system
+당신은 문서 요약 전문가입니다.
+<|im_end|>
+<|im_start|>user
+다음은 '{filename}' 파일의 내용입니다. 이 문서를 요약해주세요.
 
 파일 형식: {file_type}
 내용:
@@ -571,28 +607,45 @@ class AttachmentService:
 3. 150자 이내로 간결하게
 4. 한국어로 응답
 
-요약:"""
-                
-                messages = [
-                    {"role": "system", "content": "당신은 문서 요약 전문가입니다."},
-                    {"role": "user", "content": prompt}
-                ]
-                
-                response = client.chat_completion(
-                    messages=messages,
-                    max_tokens=200,
-                    temperature=0.3
-                )
-                
-                return response.choices[0].message.content.strip()
-                
-            except Exception:
-                # 간단한 요약으로 fallback
-                sentences = text.split('.')
-                important_sentences = [s.strip() for s in sentences[:3] if len(s.strip()) > 10]
-                return '. '.join(important_sentences) + '.' if important_sentences else text[:200] + "..."
+요약:
+<|im_end|>
+<|im_start|>assistant
+"""
+                    
+                    inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt").to(self.ai_models.qwen_model.device)
+                    
+                    import torch
+                    with torch.no_grad():
+                        outputs = self.ai_models.qwen_model.generate(
+                            **inputs,
+                            max_new_tokens=150,
+                            temperature=0.3,
+                            do_sample=True,
+                            top_p=0.9,
+                            eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
+                            pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
+                        )
+                    
+                    generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
+                    
+                    # "assistant" 이후 텍스트만 가져오기
+                    if "assistant" in generated_text:
+                        summary = generated_text.split("assistant")[-1].strip()
+                    else:
+                        summary = generated_text[len(prompt):].strip()
+                    
+                    return summary if summary else text[:200] + "..."
+                    
+                except Exception as e:
+                    print(f"[⚠️ Qwen 문서 요약 실패] {str(e)}")
+            
+            # Qwen 실패 시 간단한 요약으로 fallback
+            sentences = text.split('.')
+            important_sentences = [s.strip() for s in sentences[:3] if len(s.strip()) > 10]
+            return '. '.join(important_sentences) + '.' if important_sentences else text[:200] + "..."
                 
         except Exception as e:
+            print(f"[⚠️ 문서 요약 오류] {str(e)}")
             return text[:200] + "..." if len(text) > 200 else text
     
     def _manage_cache_size(self):

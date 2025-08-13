@@ -9,16 +9,24 @@ from models.db import db
 from models.tables import Mail
 
 class EmailService:
-    def __init__(self, config, summarizer=None):
+    def __init__(self, config, summarizer=None, ai_models=None):
         self.config = config
         self.summarizer = summarizer
+        self.ai_models = ai_models
     
     def connect_imap(self, username, password):
         """IMAP 연결"""
         try:
+            print(f"[🔍 디버그] IMAP 서버 연결 중: {self.config.GMAIL_IMAP_SERVER}")
             mail = imaplib.IMAP4_SSL(self.config.GMAIL_IMAP_SERVER)
+            
+            print(f"[🔍 디버그] 로그인 시도 중: {username}")
             mail.login(username, password)
+            
+            print(f"[🔍 디버그] 받은편지함 선택 중...")
             mail.select("inbox")
+            
+            print(f"[✅ IMAP 연결 완료]")
             return mail
         except Exception as e:
             print(f"[❗IMAP 연결 실패] {str(e)}")
@@ -35,11 +43,12 @@ class EmailService:
             raise
     
     def fetch_emails(self, username, password, count=5, after_date=None):
-        """이메일 가져오기"""
+        """받은메일 가져오기"""
         self.username = username
         mail = self.connect_imap(username, password)
         
         try:
+            mail.select("inbox")  # 받은편지함 선택
             status, data = mail.search(None, "ALL")
             all_mail_ids = data[0].split()
             mail_ids = all_mail_ids[-count:]
@@ -47,7 +56,7 @@ class EmailService:
             
             emails = []
             for msg_id in mail_ids:
-                email_data = self._process_email(mail, msg_id, after_date)
+                email_data = self._process_email(mail, msg_id, after_date, mail_type='inbox')
                 if email_data:
                     emails.append(email_data)
             
@@ -56,8 +65,81 @@ class EmailService:
             mail.close()
             mail.logout()
     
-    def _process_email(self, mail, msg_id, after_date=None):
-        """개별 이메일 처리"""
+    def fetch_sent_emails(self, username, password, count=5, after_date=None):
+        """보낸메일 가져오기 (AI 처리 없음)"""
+        self.username = username
+        
+        try:
+            print(f"[🔍 디버그] IMAP 서버 연결 중: {self.config.GMAIL_IMAP_SERVER}")
+            mail = imaplib.IMAP4_SSL(self.config.GMAIL_IMAP_SERVER)
+            
+            print(f"[🔍 디버그] 로그인 시도 중: {username}")
+            mail.login(username, password)
+            
+            # 보낸편지함 선택 (Gmail에서는 '[Gmail]/보낸편지함' 또는 '[Gmail]/Sent Mail')
+            folder_selected = False
+            
+            # 먼저 사용 가능한 폴더 목록 확인
+            try:
+                print("[🔍 폴더 목록 확인]")
+                status, folders = mail.list()
+                for folder in folders[:10]:  # 처음 10개만 출력
+                    print(f"[📁] {folder.decode()}")
+            except Exception as e:
+                print(f"[⚠️ 폴더 목록 조회 실패] {str(e)}")
+            
+            # 폴더명 시도 순서 (실제 Gmail 폴더명 사용)
+            folders_to_try = [
+                '"[Gmail]/&vPSwuNO4ycDVaA-"',  # Gmail 한글 보낸편지함
+                'sent',
+                'SENT',
+                'Sent', 
+                '"[Gmail]/Sent Mail"',
+                'INBOX.Sent'
+            ]
+            
+            for folder_name in folders_to_try:
+                try:
+                    print(f"[🔍 폴더 시도] {folder_name}")
+                    result = mail.select(folder_name)
+                    if result[0] == 'OK':
+                        print(f"[📤 보낸편지함] {folder_name} 선택 완료")
+                        folder_selected = True
+                        break
+                except Exception as e:
+                    print(f"[⚠️ 폴더 실패] {folder_name}: {str(e)}")
+                    continue
+            
+            if not folder_selected:
+                print("[❗보낸편지함] 모든 폴더 선택 실패")
+                return []
+            
+            status, data = mail.search(None, "ALL")
+            all_mail_ids = data[0].split()
+            mail_ids = all_mail_ids[-count:]
+            mail_ids.reverse()  # 최신순
+            
+            emails = []
+            for msg_id in mail_ids:
+                email_data = self._process_email(mail, msg_id, after_date, mail_type='sent')
+                if email_data:
+                    emails.append(email_data)
+            
+            print(f"[📤 보낸메일] {len(emails)}개 가져오기 완료")
+            return emails
+        finally:
+            try:
+                mail.close()
+                mail.logout()
+            except Exception as e:
+                print(f"[⚠️ IMAP 연결 종료 오류] {str(e)}")
+                try:
+                    mail.logout()
+                except:
+                    pass
+    
+    def _process_email(self, mail, msg_id, after_date=None, mail_type='inbox'):
+        """개별 이메일 처리 - Gmail 원본 데이터만 반환"""
         try:
             status, msg_data = mail.fetch(msg_id, "(RFC822)")
             if not msg_data or not msg_data[0]:
@@ -84,54 +166,29 @@ class EmailService:
             # 본문 추출
             body = self._extract_body(msg)
 
-            # 요약 생성
-            summary_text = ""
-            try:
-                if self.summarizer and body:
-                    safe_text = body[:1000]
-                    if len(safe_text) < 50:
-                        summary_text = safe_text
-                    else:
-                        summary_text = self.summarizer(
-                            safe_text,
-                            max_length=80,
-                            min_length=30,
-                            do_sample=False
-                        )[0]["summary_text"]
-                else:
-                    summary_text = "(요약 없음)"
-            except Exception as e:
-                print(f"[⚠️ 요약 실패] {str(e)}")
-                summary_text = "(요약 실패)"
-
-            # 디비 중복체크
-            mail_id_str = str(msg_id.decode()) if isinstance(msg_id, bytes) else str(msg_id)
-            existing = Mail.query.filter_by(user_email=self.username, mail_id=mail_id_str).first()
+            # ✅ Message-ID 헤더를 고유 식별자로 사용 (IMAP UID 대신)
+            message_id_header = msg.get("Message-ID", "")
+            if message_id_header:
+                # Message-ID에서 < > 제거하고 해시로 단축
+                import hashlib
+                clean_id = message_id_header.strip('<>')
+                mail_id_str = hashlib.sha256(clean_id.encode()).hexdigest()[:16]  # 16자리 해시
+                print(f"[🔍 Message-ID → Hash] {clean_id} → {mail_id_str}")
+            else:
+                # Message-ID가 없는 경우 fallback (드문 경우)
+                imap_uid = str(msg_id.decode()) if isinstance(msg_id, bytes) else str(msg_id)
+                mail_id_str = f"imap_{imap_uid}"
+                print(f"[⚠️ Message-ID 없음, IMAP UID 사용] {mail_id_str}")
             
-            # 디비 저장
-            if not existing: 
-                new_mail = Mail(
-                    user_email=self.username,
-                    mail_id=mail_id_str,
-                    subject=subject,
-                    from_=from_field,
-                    body=body,
-                    raw_message=msg.as_string(),
-                    date=date_obj,
-                    summary=summary_text
-                )
-                db.session.add(new_mail)
-                db.session.commit()
-                print(f"[📥 저장 완료] {self.username} → {subject[:30]}...")
-
-
             return {
-                "id": int(msg_id.decode()) if isinstance(msg_id, bytes) else int(msg_id),
+                "id": mail_id_str,  # 문자열로 통일
                 "subject": subject,
                 "from": from_field,
                 "date": date_str,
+                "date_obj": date_obj,  # 정확한 날짜 객체 추가
                 "body": body,
-                "raw_message": msg
+                "raw_message": msg,
+                "mail_type": mail_type  # 'inbox' 또는 'sent'
             }
             
         except Exception as e:
@@ -235,3 +292,5 @@ class EmailService:
         # 여러 키워드 중 하나라도 매칭되면 포함
         keywords = search_lower.split()
         return any(keyword in search_text for keyword in keywords)
+    
+    # ✅ AI 요약 기능 제거 - email_routes.py에서 처리

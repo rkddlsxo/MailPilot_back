@@ -1,11 +1,13 @@
 from flask import Blueprint, request, jsonify
+import json
+from models.tables import db, Mail
 
 def create_attachment_routes(attachment_service, session_manager):
     attachment_bp = Blueprint('attachment', __name__)
     
     @attachment_bp.route('/api/attachment-info', methods=['POST'])
     def get_attachment_info():
-        """특정 메일의 첨부파일 상세 정보 반환"""
+        """특정 메일의 첨부파일 상세 정보 반환 - DB 기반"""
         try:
             data = request.get_json()
             email_id = data.get("email_id")
@@ -15,25 +17,28 @@ def create_attachment_routes(attachment_service, session_manager):
             if not session_manager.session_exists(user_email):
                 return jsonify({"error": "로그인이 필요합니다."}), 401
             
-            # 세션에서 해당 메일 찾기
-            user_session = session_manager.get_session(user_email)
-            last_emails = user_session.get('last_emails', [])
-            target_email = None
+            # DB에서 해당 메일 찾기
+            target_mail = Mail.query.filter_by(
+                user_email=user_email, 
+                mail_id=str(email_id)
+            ).first()
             
-            for email_data in last_emails:
-                if email_data.get('id') == email_id:
-                    target_email = email_data
-                    break
-            
-            if not target_email:
+            if not target_mail:
                 return jsonify({"error": "해당 메일을 찾을 수 없습니다."}), 404
             
-            attachments = target_email.get('attachments', [])
+            # 첨부파일 데이터 파싱
+            attachments = []
+            if target_mail.attachments_data:
+                try:
+                    attachment_data = json.loads(target_mail.attachments_data)
+                    attachments = attachment_data.get('files', [])
+                except json.JSONDecodeError:
+                    attachments = []
             
             return jsonify({
                 "success": True,
                 "email_id": email_id,
-                "subject": target_email.get('subject', ''),
+                "subject": target_mail.subject or '',
                 "attachments": attachments,
                 "attachment_count": len(attachments),
                 "has_yolo_detections": any(att.get('yolo_detections') for att in attachments)
@@ -45,7 +50,7 @@ def create_attachment_routes(attachment_service, session_manager):
     
     @attachment_bp.route('/api/document-summary', methods=['POST'])
     def get_document_summary():
-        """특정 첨부파일의 상세 문서 요약 반환"""
+        """특정 첨부파일의 상세 문서 요약 반환 - DB 기반"""
         try:
             data = request.get_json()
             email_id = data.get("email_id")
@@ -56,18 +61,25 @@ def create_attachment_routes(attachment_service, session_manager):
             if not session_manager.session_exists(user_email):
                 return jsonify({"error": "로그인이 필요합니다."}), 401
             
-            # 세션에서 해당 메일의 첨부파일 찾기
-            user_session = session_manager.get_session(user_email)
-            last_emails = user_session.get('last_emails', [])
-            target_attachment = None
+            # DB에서 해당 메일 찾기
+            target_mail = Mail.query.filter_by(
+                user_email=user_email, 
+                mail_id=str(email_id)
+            ).first()
             
-            for email_data in last_emails:
-                if email_data.get('id') == email_id:
-                    for attachment in email_data.get('attachments', []):
-                        if attachment.get('filename') == filename:
-                            target_attachment = attachment
-                            break
-                    break
+            if not target_mail or not target_mail.attachments_data:
+                return jsonify({"error": "해당 메일이나 첨부파일을 찾을 수 없습니다."}), 404
+            
+            # 첨부파일 데이터에서 해당 파일 찾기
+            target_attachment = None
+            try:
+                attachment_data = json.loads(target_mail.attachments_data)
+                for attachment in attachment_data.get('files', []):
+                    if attachment.get('filename') == filename:
+                        target_attachment = attachment
+                        break
+            except json.JSONDecodeError:
+                return jsonify({"error": "첨부파일 데이터 파싱 오류"}), 500
             
             if not target_attachment:
                 return jsonify({"error": "해당 첨부파일을 찾을 수 없습니다."}), 404

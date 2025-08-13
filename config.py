@@ -15,18 +15,16 @@ class Config:
     # AI 모델 설정
     YOLO_MODEL = 'yolov8n.pt'
     QWEN_MODEL = "Qwen/Qwen1.5-1.8B-Chat"
-    HUGGINGFACE_MODEL = "Qwen/Qwen2.5-7B-Instruct"
     
     # API 토큰 (환경변수에서 가져오기)
-    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'nk-4gE_ECBXkdYBHvB9y-VREwPv_BZ_5UoigV7L0s9TIno')  # 실제 토큰으로 교체
-    HF_TOKEN = os.getenv('HF_TOKEN', 'your-hf-token-here')  # 실제 토큰으로 교체
+    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'your-nomic-token-hter')  # 실제 토큰으로 교체
     
     # 이메일 설정
     GMAIL_IMAP_SERVER = "imap.gmail.com"
     GMAIL_SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 465
 
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root@localhost/mailpilot'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:비밀번호@localhost/mailpilot'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 캐시 설정
@@ -53,7 +51,7 @@ class Config:
         
         if cls.NOMIC_TOKEN == 'your-nomic-token-here':
             issues.append("NOMIC_TOKEN이 설정되지 않았습니다.")
-            
+
         if cls.HF_TOKEN == 'your-hf-token-here':
             issues.append("HF_TOKEN이 설정되지 않았습니다.")
             

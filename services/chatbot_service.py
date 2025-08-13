@@ -178,14 +178,14 @@ class ChatbotService:
             if not correction_text:
                 return "📝 **문법 및 맞춤법 교정**\n\n교정하고 싶은 텍스트를 입력해주세요.\n\n예시: '안녕하세요. 제가 오늘 회의에 참석못할것 같습니다' 교정해주세요"
             
-            # HuggingFace API 사용
-            if not self.config.HF_TOKEN:
-                return f"📝 **문법 교정 결과**\n\n원본: {correction_text}\n\n⚠️ HF_TOKEN이 설정되지 않아 교정 서비스를 사용할 수 없습니다."
-            
-            try:
-                client = self.ai_models.get_inference_client()
-                
-                prompt = f"""다음 텍스트의 맞춤법, 문법, 띄어쓰기를 교정해주세요.
+            # Qwen 로컬 모델 사용
+            if self.ai_models.load_qwen_model():
+                try:
+                    prompt = f"""<|im_start|>system
+당신은 전문 교정 편집자입니다.
+<|im_end|>
+<|im_start|>user
+다음 텍스트의 맞춤법, 문법, 띄어쓰기를 교정해주세요.
 
 원본 텍스트:
 "{correction_text}"
@@ -197,22 +197,33 @@ class ChatbotService:
 4. 자연스러운 표현으로 개선
 5. 원래 의미는 유지
 
-교정된 텍스트:"""
-                
-                messages = [
-                    {"role": "system", "content": "당신은 전문 교정 편집자입니다."},
-                    {"role": "user", "content": prompt}
-                ]
-                
-                response = client.chat_completion(
-                    messages=messages,
-                    max_tokens=300,
-                    temperature=0.3
-                )
-                
-                corrected_text = response.choices[0].message.content.strip()
-                
-                return f"""📝 **문법 및 맞춤법 교정 완료**
+교정된 텍스트:
+<|im_end|>
+<|im_start|>assistant
+"""
+                    
+                    inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt").to(self.ai_models.qwen_model.device)
+                    
+                    import torch
+                    with torch.no_grad():
+                        outputs = self.ai_models.qwen_model.generate(
+                            **inputs,
+                            max_new_tokens=200,
+                            temperature=0.3,
+                            do_sample=True,
+                            top_p=0.9,
+                            eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
+                            pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
+                        )
+                    
+                    generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
+                    
+                    if "assistant" in generated_text:
+                        corrected_text = generated_text.split("assistant")[-1].strip()
+                    else:
+                        corrected_text = generated_text[len(prompt):].strip()
+                    
+                    return f"""📝 **문법 및 맞춤법 교정 완료**
 
 **원본:**
 {correction_text}
@@ -221,9 +232,12 @@ class ChatbotService:
 {corrected_text}
 
 ✅ **AI 교정이 완료되었습니다!**"""
-                
-            except Exception as e:
-                # 간단한 규칙 기반 교정으로 fallback
+                    
+                except Exception as e:
+                    print(f"[⚠️ Qwen 문법 교정 실패] {str(e)}")
+                    return self._simple_grammar_correction(correction_text)
+            else:
+                # Qwen 모델 로딩 실패 시 간단한 규칙 기반 교정
                 return self._simple_grammar_correction(correction_text)
                 
         except Exception as e:
@@ -257,67 +271,17 @@ class ChatbotService:
             return f"📝 **교정 검토 완료**\n\n현재 텍스트에서 명백한 오류를 발견하지 못했습니다."
     
     def _handle_image_generation(self, user_input):
-        """이미지 생성 처리"""
-        try:
-            # 프롬프트 추출
-            image_prompt = user_input
-            remove_words = ["이미지 생성해주세요", "이미지 생성", "그려줘", "그림", "image generation", "generate", "만들어"]
-            for word in remove_words:
-                image_prompt = image_prompt.replace(word, "").strip()
-            
-            if not image_prompt:
-                return "🎨 **이미지 생성**\n\n생성하고 싶은 이미지에 대한 설명을 입력해주세요.\n\n예시:\n• '아름다운 석양과 바다'\n• '귀여운 고양이가 놀고 있는 모습'"
-            
-            if not self.config.HF_TOKEN:
-                return f"🎨 **이미지 생성**\n\n요청된 이미지: '{image_prompt}'\n\n⚠️ HF_TOKEN이 설정되지 않아 이미지 생성을 할 수 없습니다."
-            
-            try:
-                from huggingface_hub import InferenceClient
-                import base64
-                import time
-                import os
-                
-                client = InferenceClient(
-                    model="runwayml/stable-diffusion-v1-5",
-                    token=self.config.HF_TOKEN
-                )
-                
-                # 한국어를 영어로 번역
-                enhanced_prompt = self._translate_korean_to_english(image_prompt)
-                enhanced_prompt = f"{enhanced_prompt}, high quality, detailed, beautiful, artistic"
-                
-                # 이미지 생성
-                image_bytes = client.text_to_image(
-                    prompt=enhanced_prompt,
-                    height=512,
-                    width=512,
-                    num_inference_steps=20
-                )
-                
-                # 파일 저장
-                timestamp = int(time.time())
-                filename = f"generated_image_{timestamp}.png"
-                filepath = os.path.join(self.config.ATTACHMENT_FOLDER, filename)
-                
-                os.makedirs(self.config.ATTACHMENT_FOLDER, exist_ok=True)
-                
-                with open(filepath, "wb") as f:
-                    f.write(image_bytes)
-                
-                return f"""🎨 **이미지 생성 완료!**
+        """이미지 생성 처리 (비활성화됨)"""
+        return """🎨 **이미지 생성 기능이 비활성화되었습니다**
 
-📝 **요청:** '{image_prompt}'
-🖼️ **생성된 이미지:** {filename}
-📁 **저장 위치:** /static/attachments/{filename}
-🌐 **웹 주소:** http://localhost:5001/static/attachments/{filename}
+죄송합니다. 현재 이미지 생성 기능은 사용할 수 없습니다.
 
-✅ **성공!** 이미지가 생성되어 저장되었습니다."""
-                
-            except Exception as e:
-                return f"🎨 **이미지 생성 실패**\n\n오류: {str(e)}\n\n💡 잠시 후 다시 시도해주세요."
-                
-        except Exception as e:
-            return "❌ 이미지 생성 처리 중 오류가 발생했습니다."
+🔧 **사용 가능한 기능들:**
+• **문법/맞춤법 교정**: "이 문장 교정해주세요"
+• **메일 검색**: "회의 관련 메일 찾아줘"  
+• **사람별 메일**: "김철수님 메일 검색"
+
+다른 기능을 사용해보세요! 😊"""
     
     def _translate_korean_to_english(self, text):
         """한국어를 영어로 번역"""
@@ -351,23 +315,38 @@ class ChatbotService:
             if not search_keywords:
                 return "🔍 **메일 검색**\n\n검색하고 싶은 키워드를 입력해주세요.\n\n예시:\n• '회의 관련 메일 찾아줘'\n• '프로젝트 업데이트 검색'"
             
-            # 이메일 검색 실행
+            # ✅ DB에서 이메일 검색 실행  
             try:
-                found_emails = self.email_service.search_emails(user_email, app_password, search_keywords, max_results=50)
+                found_emails = self._search_emails_in_db(user_email, search_keywords, max_results=50)
                 
                 if found_emails:
-                    result = f"🔍 **검색 결과**\n\n키워드: '{search_keywords}'\n검색된 메일: {len(found_emails)}개\n\n"
-                    for i, mail_info in enumerate(found_emails, 1):
-                        result += f"**{i}. {mail_info['subject']}**\n"
-                        result += f"📤 {mail_info['from']}\n"
-                        result += f"📅 {mail_info['date']}\n"
-                        if mail_info['preview']:
-                            result += f"💬 {mail_info['preview']}\n"
-                        result += "\n"
-                    result += "💡 더 정확한 검색을 위해 구체적인 키워드를 사용해보세요."
+                    result = f"🔍 **검색 결과**\n\n키워드: '{search_keywords}'\n📧 찾은 메일: **{len(found_emails)}개**\n\n"
+                    
+                    for i, mail_info in enumerate(found_emails[:5], 1):  # 최대 5개만 표시
+                        result += f"**📬 {i}번째 메일**\n"
+                        result += f"📋 **제목**: {mail_info['subject']}\n"
+                        result += f"👤 **발신자**: {mail_info['from']}\n"
+                        result += f"📅 **날짜**: {mail_info['date']}\n"
+                        
+                        # 요약이 있으면 표시
+                        if mail_info.get('summary') and mail_info['summary'] != '요약 없음':
+                            result += f"📝 **요약**: {mail_info['summary']}\n"
+                        elif mail_info['preview']:
+                            result += f"💬 **미리보기**: {mail_info['preview'][:100]}{'...' if len(mail_info['preview']) > 100 else ''}\n"
+                        
+                        # 분류가 있으면 표시
+                        if mail_info.get('classification') and mail_info['classification'] != 'unknown':
+                            result += f"🏷️ **분류**: {mail_info['classification']}\n"
+                        
+                        result += "─────────────\n"
+                    
+                    if len(found_emails) > 5:
+                        result += f"📊 **더 있음**: 총 {len(found_emails)}개 중 상위 5개만 표시\n"
+                    
+                    result += "\n💡 더 정확한 검색을 위해 구체적인 키워드를 사용해보세요."
                     return result
                 else:
-                    return f"🔍 **검색 결과**\n\n키워드: '{search_keywords}'\n\n❌ 관련된 메일을 찾을 수 없습니다.\n\n💡 다른 키워드로 시도해보세요."
+                    return f"🔍 **검색 결과**\n\n키워드: '{search_keywords}'\n\n❌ 관련된 메일을 찾을 수 없습니다.\n\n💡 **검색 팁**:\n• 다른 키워드로 시도\n• 발신자 이름이나 이메일 주소로 검색\n• 메일 제목의 일부로 검색"
                     
             except Exception as e:
                 return f"❌ 메일 검색 중 오류가 발생했습니다.\n\n오류: {str(e)}"
@@ -398,8 +377,8 @@ class ChatbotService:
                     return "👤 **사람별 메일 검색**\n\n찾고 싶은 사람의 이름이나 이메일 주소를 명확히 알려주세요.\n\n예시:\n• '김철수님의 메일'\n• 'john@company.com 메일'"
             
             try:
-                # 사람별 이메일 검색 실행
-                found_emails = self.email_service.search_emails(user_email, app_password, search_target, max_results=100)
+                # ✅ DB에서 사람별 이메일 검색 실행
+                found_emails = self._search_emails_in_db(user_email, search_target, max_results=100)
                 
                 # 발신자 정보로 필터링
                 person_emails = []
@@ -415,15 +394,33 @@ class ChatbotService:
                             break
                 
                 if person_emails:
-                    result = f"👤 **사람별 메일 검색 결과**\n\n검색 대상: '{search_target}'\n발견된 메일: {len(person_emails)}개\n\n"
-                    for i, mail_info in enumerate(person_emails, 1):
-                        result += f"**{i}. {mail_info['subject']}**\n"
-                        result += f"📤 {mail_info['from']}\n"
-                        result += f"📅 {mail_info['date']}\n\n"
-                    result += "💡 특정 메일을 자세히 보려면 메일 리스트에서 확인하세요."
+                    result = f"👤 **사람별 메일 검색 결과**\n\n🎯 검색 대상: **{search_target}**\n📧 발견된 메일: **{len(person_emails)}개**\n\n"
+                    
+                    for i, mail_info in enumerate(person_emails[:5], 1):  # 최대 5개만 표시
+                        result += f"**📬 {i}번째 메일**\n"
+                        result += f"📋 **제목**: {mail_info['subject']}\n"
+                        result += f"👤 **발신자**: {mail_info['from']}\n"
+                        result += f"📅 **날짜**: {mail_info['date']}\n"
+                        
+                        # 요약이 있으면 표시
+                        if mail_info.get('summary') and mail_info['summary'] != '요약 없음':
+                            result += f"📝 **요약**: {mail_info['summary']}\n"
+                        elif mail_info['preview']:
+                            result += f"💬 **미리보기**: {mail_info['preview'][:100]}{'...' if len(mail_info['preview']) > 100 else ''}\n"
+                        
+                        # 분류가 있으면 표시
+                        if mail_info.get('classification') and mail_info['classification'] != 'unknown':
+                            result += f"🏷️ **분류**: {mail_info['classification']}\n"
+                        
+                        result += "─────────────\n"
+                    
+                    if len(person_emails) > 5:
+                        result += f"📊 **더 있음**: 총 {len(person_emails)}개 중 상위 5개만 표시\n"
+                    
+                    result += "\n💡 특정 메일을 자세히 보려면 메일 리스트에서 확인하세요."
                     return result
                 else:
-                    return f"👤 **사람별 메일 검색 결과**\n\n검색 대상: '{search_target}'\n\n❌ 해당 사람의 메일을 찾을 수 없습니다.\n\n💡 정확한 이름이나 이메일 주소로 다시 시도해보세요."
+                    return f"👤 **사람별 메일 검색 결과**\n\n🎯 검색 대상: **{search_target}**\n\n❌ 해당 사람의 메일을 찾을 수 없습니다.\n\n💡 **검색 팁**:\n• 정확한 이름이나 이메일 주소로 재시도\n• 이메일 주소 전체 입력\n• 한글 이름의 경우 성함으로만 검색"
                     
             except Exception as e:
                 return f"❌ 사람별 메일 검색 중 오류가 발생했습니다.\n\n오류: {str(e)}"
@@ -493,30 +490,44 @@ class ChatbotService:
 - 혼합: "find 프로젝트 관련 emails" """
 
     def generate_ai_reply(self, sender, subject, body, current_user_email):
-        """AI 답장 생성"""
+        """AI 답장 생성 (Qwen 1.5-1.8B 로컬 모델 사용)"""
         try:
             print(f"[🤖 AI 답장 요청] User: {current_user_email}, From: {sender}")
             
-            if not self.config.HF_TOKEN:
-                return {'error': 'HF_TOKEN 환경 변수가 설정되어 있지 않습니다.'}, 500
-            
-            client = self.ai_models.get_inference_client()
+            # Qwen 로컬 모델 로딩 확인
+            if not self.ai_models.load_qwen_model():
+                return {'error': 'Qwen 모델을 로드할 수 없습니다.'}, 500
             
             # 프롬프트 생성
-            user_prompt = self._build_ai_reply_prompt(sender, subject, body)
+            user_prompt = self._build_ai_reply_prompt_for_qwen(sender, subject, body)
             
-            messages = [
-                {"role": "system", "content": "You are a helpful email assistant that writes professional email replies."},
-                {"role": "user", "content": user_prompt}
-            ]
+            inputs = self.ai_models.qwen_tokenizer(user_prompt, return_tensors="pt").to(self.ai_models.qwen_model.device)
             
-            response = client.chat_completion(
-                messages=messages,
-                max_tokens=256,
-                temperature=0.7
-            )
+            import torch
+            with torch.no_grad():
+                outputs = self.ai_models.qwen_model.generate(
+                    **inputs,
+                    max_new_tokens=200,
+                    temperature=0.7,
+                    do_sample=True,
+                    top_p=0.9,
+                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
+                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
+                )
             
-            ai_reply = response.choices[0].message.content.strip()
+            # 입력 부분 제거하고 생성된 답장만 추출
+            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
+            
+            # "assistant" 이후 텍스트만 가져오기
+            if "assistant" in generated_text:
+                ai_reply = generated_text.split("assistant")[-1].strip()
+            else:
+                ai_reply = generated_text[len(user_prompt):].strip()
+            
+            # 불필요한 부분 정리
+            ai_reply = ai_reply.strip()
+            if ai_reply.startswith('"') and ai_reply.endswith('"'):
+                ai_reply = ai_reply[1:-1]
             
             print(f"[✅ AI 답장 생성 완료] User: {current_user_email}, 길이: {len(ai_reply)}자")
             
@@ -525,6 +536,86 @@ class ChatbotService:
         except Exception as e:
             print(f"[❗AI 답장 생성 실패] {str(e)}")
             return {'error': f'AI 답장 생성 실패: {str(e)}'}, 500
+    
+    def _build_ai_reply_prompt_for_qwen(self, sender, subject, body):
+        """Qwen 모델용 AI 답장 프롬프트 생성"""
+        return f"""<|im_start|>system
+You are a helpful email assistant that writes professional email replies.
+<|im_end|>
+<|im_start|>user
+Please read the following email and write a polite, professional reply in English:
+
+---
+From: {sender}
+Subject: {subject}
+Body: {body}
+---
+
+Instructions:
+1. Identify the purpose of the email (invitation, question, information request, scheduling, etc.)
+2. Write a concise (3-4 sentences), polite reply that directly addresses the purpose
+3. Use a friendly yet professional tone
+4. Only output the reply text (no analysis, no quotes, no original email content)
+
+Reply:
+<|im_end|>
+<|im_start|>assistant
+"""
+
+    def _search_emails_in_db(self, user_email, search_keywords, max_results=50):
+        """DB에서 이메일 검색"""
+        try:
+            from models.tables import Mail
+            from models.db import db
+            import re
+            
+            # 이메일 주소 패턴 확인
+            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+            email_found = re.search(email_pattern, search_keywords)
+            
+            if email_found:
+                # 이메일 주소로 검색 (발신자 기준)
+                search_email = email_found.group()
+                print(f"[🎯 DB 이메일 주소 검색] {search_email}")
+                
+                db_results = Mail.query.filter(
+                    Mail.user_email == user_email,
+                    Mail.from_.contains(search_email)
+                ).order_by(Mail.date.desc()).limit(max_results).all()
+                
+            else:
+                # 키워드로 제목/내용/발신자 검색
+                print(f"[🎯 DB 키워드 검색] {search_keywords}")
+                
+                db_results = Mail.query.filter(
+                    Mail.user_email == user_email,
+                    db.or_(
+                        Mail.subject.contains(search_keywords),
+                        Mail.body.contains(search_keywords),
+                        Mail.from_.contains(search_keywords),
+                        Mail.summary.contains(search_keywords)
+                    )
+                ).order_by(Mail.date.desc()).limit(max_results).all()
+            
+            # 결과를 기존 형태로 변환
+            found_emails = []
+            for mail in db_results:
+                found_emails.append({
+                    'id': mail.mail_id,
+                    'subject': mail.subject[:60] + "..." if len(mail.subject) > 60 else mail.subject,
+                    'from': mail.from_[:40] + "..." if len(mail.from_) > 40 else mail.from_,
+                    'date': mail.date.strftime('%Y-%m-%d %H:%M:%S'),
+                    'preview': mail.body[:200] + "..." if len(mail.body) > 200 else mail.body,
+                    'classification': mail.classification,
+                    'summary': mail.summary
+                })
+            
+            print(f"[✅ 챗봇 DB 검색] {len(found_emails)}개 결과")
+            return found_emails
+            
+        except Exception as e:
+            print(f"[❗ 챗봇 DB 검색 실패] {str(e)}")
+            return []
     
     def _build_ai_reply_prompt(self, sender, subject, body):
         """AI 답장을 위한 프롬프트 생성"""
