@@ -4,7 +4,7 @@ import email as email_module
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from models.db import db
 from models.tables import Mail
 
@@ -157,12 +157,18 @@ class EmailService:
         """날짜 파싱"""
         try:
             date_obj = parsedate_to_datetime(raw_date)
+            
+            # 한국시간으로 변환
+            if date_obj.tzinfo:
+                kst = timezone(timedelta(hours=9))
+                date_obj = date_obj.astimezone(kst)  # ← kst로 전부 변환
+            
             date_obj = date_obj.replace(tzinfo=None)
             date_str = date_obj.strftime("%Y-%m-%d %H:%M:%S")
             return date_obj, date_str
         except:
             return None, raw_date[:19] if len(raw_date) >= 19 else raw_date
-    
+
     def _extract_body(self, msg):
         """본문 추출"""
         body = ""
