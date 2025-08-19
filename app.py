@@ -19,6 +19,9 @@ from routes.email_routes import create_email_routes
 from routes.todo_routes import create_todo_routes
 from routes.chatbot_routes import create_chatbot_routes
 from routes.attachment_routes import create_attachment_routes
+from routes.settings_routes import create_settings_routes
+from routes.signature_routes import create_signature_routes
+from routes.mail_management_routes import create_mail_management_routes
 
 def create_app():
     """Flask 애플리케이션 팩토리"""
@@ -27,6 +30,9 @@ def create_app():
     # 설정 로드
     config = Config()
     app.config.from_object(config)
+    
+    # Flask 세션을 위한 SECRET_KEY 설정 (중요!)
+    app.secret_key = config.SECRET_KEY or 'dev-secret-key-for-sessions-2024'
 
      # SQLAlchemy 초기화
     db.init_app(app)
@@ -59,6 +65,16 @@ def create_app():
     
     attachment_routes = create_attachment_routes(attachment_service, session_manager)
     app.register_blueprint(attachment_routes)
+    
+    # 설정 시스템 라우트 등록
+    settings_routes = create_settings_routes(session_manager)
+    app.register_blueprint(settings_routes)
+    
+    signature_routes = create_signature_routes()
+    app.register_blueprint(signature_routes)
+    
+    mail_mgmt_routes = create_mail_management_routes()
+    app.register_blueprint(mail_mgmt_routes)
     
     # 기본 라우트
     @app.route('/', methods=['GET'])

@@ -4,7 +4,7 @@ import email as email_module
 from email.header import decode_header
 from email.utils import parseaddr, parsedate_to_datetime
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from models.db import db
 from models.tables import Mail
 
@@ -214,10 +214,17 @@ class EmailService:
         """날짜 파싱"""
         try:
             date_obj = parsedate_to_datetime(raw_date)
-            date_obj = date_obj.replace(tzinfo=None)
+                        
+            # 한국시간으로 변환
+            if date_obj.tzinfo:
+                kst = timezone(timedelta(hours=9))
+                date_obj = date_obj.astimezone(kst)  # ← kst로 전부 변환
+
+            date_obj = date_obj.replace(tzinfo=None)                
             date_str = date_obj.strftime("%Y-%m-%d %H:%M:%S")
             return date_obj, date_str
-        except:
+        except Exception as e:
+            print(f"[⚠️ 날짜 파싱 오류] {raw_date}: {e}")
             return None, raw_date[:19] if len(raw_date) >= 19 else raw_date
     
     def _extract_body(self, msg):
@@ -238,15 +245,29 @@ class EmailService:
         except Exception:
             return ""
     
-    def send_email(self, username, password, to, subject, body):
+    def send_email(self, username, password, to, subject, body, from_header=None, is_html=False):
         """이메일 발송"""
         server = self.connect_smtp(username, password)
         
         try:
-            msg = MIMEText(body)
-            msg["Subject"] = subject
-            msg["From"] = username
-            msg["To"] = to
+            # HTML 또는 일반 텍스트 메시지 생성
+            if is_html:
+                from email.mime.multipart import MIMEMultipart
+                from email.mime.text import MIMEText
+                
+                msg = MIMEMultipart('alternative')
+                msg["Subject"] = subject
+                msg["From"] = from_header if from_header else username
+                msg["To"] = to
+                
+                # HTML 파트 추가
+                html_part = MIMEText(body, 'html', 'utf-8')
+                msg.attach(html_part)
+            else:
+                msg = MIMEText(body, 'plain', 'utf-8')
+                msg["Subject"] = subject
+                msg["From"] = from_header if from_header else username
+                msg["To"] = to
             
             server.send_message(msg)
             print(f"[📤 메일 전송 성공] {username} -> {to}")

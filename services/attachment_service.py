@@ -276,10 +276,23 @@ class AttachmentService:
             image_np = np.array(image)
             print(f"[🔍 OCR] numpy 배열 형태: {image_np.shape}, dtype: {image_np.dtype}")
             
-            # OCR 수행
-            print(f"[🔍 OCR] EasyOCR 텍스트 추출 시작...")
-            result = self.ai_models.ocr_reader.readtext(image_np, detail=1, paragraph=False)
-            print(f"[🔍 OCR] EasyOCR 원본 결과 개수: {len(result)}")
+            # OCR 수행 (ONNX 우선, EasyOCR API 폴백)
+            result = None
+            
+            # ONNX OCR 전용 처리
+            if hasattr(self.ai_models, 'easyocr_onnx_session') and self.ai_models.easyocr_onnx_session:
+                print(f"[🚀 ONNX OCR] 텍스트 추출 시작...")
+                result = self.ai_models.extract_text_from_image_onnx(image_np)
+                if result:
+                    print(f"[✅ ONNX OCR] 성공 - {len(result)}개 텍스트 영역 탐지")
+                    if result:
+                        print(f"[📊 ONNX OCR] 첫 번째 탐지: {result[0]}")
+                else:
+                    print(f"[❌ ONNX OCR] 텍스트 영역 탐지되지 않음")
+                    result = []
+            else:
+                print(f"[❌ OCR] ONNX OCR 모델이 로딩되지 않음")
+                result = []
             
             if result:
                 print(f"[🔍 OCR] 첫 번째 결과 예시: {result[0] if result else 'None'}")

@@ -150,7 +150,7 @@ def create_todo_routes(session_manager, todo_service):
                 })
             
         except Exception as e:
-            print(f"[❗할일 API 오류] {str(e)}")
+            print(f"[❌ 할일] {str(e)}")
             return jsonify({"error": str(e)}), 500
     
     @todo_bp.route('/api/extract-todos', methods=['POST'])
@@ -171,7 +171,7 @@ def create_todo_routes(session_manager, todo_service):
                 # 특정 메일들만 처리
                 db_mails = Mail.query.filter(
                     Mail.user_email == user_email,
-                    Mail.mail_id.in_([str(eid) for eid in email_ids])
+                    Mail.mail_id.in_(email_ids)
                 ).all()
             else:
                 # 모든 메일 처리
@@ -247,7 +247,7 @@ def create_todo_routes(session_manager, todo_service):
                         processed_count += 1
                         
                 except Exception as e:
-                    print(f"[⚠️ 이메일 처리 오류] {str(e)}")
+                    print(f"[❌ 할일추출] {str(e)}")
                     continue
             
             # DB에 커밋
@@ -267,7 +267,7 @@ def create_todo_routes(session_manager, todo_service):
                 'mail_id': todo.mail_id
             } for todo in final_todos]
             
-            print(f"[✅ 할일 추출 완료] 총 {len(todos_response)}개 (신규 {new_count}개)")
+            print(f"[✅ 할일추출] 총 {len(todos_response)}개 (신규 {new_count}개)")
             
             return jsonify({
                 "success": True,
@@ -278,7 +278,7 @@ def create_todo_routes(session_manager, todo_service):
             })
             
         except Exception as e:
-            print(f"[❗할일 추출 오류] {str(e)}")
+            print(f"[❌ 할일추출] {str(e)}")
             return jsonify({"error": str(e)}), 500
     
     @todo_bp.route('/api/todos/cleanup-duplicates', methods=['POST'])
@@ -324,7 +324,7 @@ def create_todo_routes(session_manager, todo_service):
             removed_count = len(todos_to_remove)
             remaining_count = len(todos_to_keep)
             
-            print(f"[✅ 중복 정리 완료] {removed_count}개 제거, {remaining_count}개 남음")
+            print(f"[✅ 중복정리] {removed_count}개 제거, {remaining_count}개 남음")
             
             return jsonify({
                 "success": True,
@@ -335,7 +335,7 @@ def create_todo_routes(session_manager, todo_service):
             })
             
         except Exception as e:
-            print(f"[❗중복 정리 오류] {str(e)}")
+            print(f"[❌ 중복정리] {str(e)}")
             return jsonify({"error": str(e)}), 500
     
     return todo_bp

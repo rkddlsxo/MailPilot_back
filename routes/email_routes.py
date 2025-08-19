@@ -9,19 +9,34 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
 
     @email_bp.route('/api/emails/stored', methods=['POST'])
     def get_stored_emails():
-        """DB에서 저장된 이메일 조회"""
+        """DB에서 저장된 이메일 조회 (페이지네이션 지원)"""
         try:
             data = request.get_json()
             email = data.get("email")
+            page = data.get("page", 1)  # 페이지 번호 (기본값: 1)
+            offset = data.get("offset", 0)  # 오프셋 (기본값: 0)
 
             if not session_manager.session_exists(email):
                 return jsonify({"error": "로그인이 필요합니다."}), 401
 
-            from models.tables import Mail  # ✅ 필요시 상단으로 이동
+            from models.tables import Mail, UserSettings  # ✅ 필요시 상단으로 이동
 
+            # 사용자 설정에서 페이지당 표시할 메일 수 가져오기 (페이지네이션용)
+            settings = UserSettings.get_or_create(email, 'GENERAL', 'READ')
+            items_per_page = settings.settings_data.get('itemsPerPage', 10) if settings else 10
+            
+            print(f"[📊 DB메일] {email}의 페이지당 표시할 메일 수 설정: {items_per_page} (페이지: {page}, 오프셋: {offset})")
+
+            # 페이지네이션 적용
+            calculated_offset = (page - 1) * items_per_page + offset
+            
             mails = Mail.query.filter_by(user_email=email)\
                             .order_by(Mail.date.desc())\
-                            .limit(20).all()
+                            .offset(calculated_offset)\
+                            .limit(items_per_page).all()
+            
+            # 전체 메일 수 조회 (페이지네이션 정보용)
+            total_count = Mail.query.filter_by(user_email=email).count()
 
             result = [{
                 "id": mail.mail_id,
@@ -40,7 +55,15 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
             return jsonify({
                 "emails": result,
                 "source": "database",
-                "count": len(result)
+                "count": len(result),
+                "total_count": total_count,
+                "pagination": {
+                    "page": page,
+                    "items_per_page": items_per_page,
+                    "total_pages": (total_count + items_per_page - 1) // items_per_page,
+                    "has_next": calculated_offset + len(result) < total_count,
+                    "has_prev": page > 1
+                }
             })
 
         except Exception as e:
@@ -203,8 +226,22 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
                 except Exception as e:
                     print("[⚠️ after_date 파싱 실패]", e)
             
-            # 메일 수 결정
-            count = 10 if after_dt else 5
+            # 사용자 설정에서 Gmail 가져오기 개수와 DB 저장 개수 가져오기
+            from models.tables import UserSettings
+            settings = UserSettings.get_or_create(username, 'GENERAL', 'READ')
+            
+            print(f"[📊 메일수] {username}의 READ 설정 데이터: {settings.settings_data}")
+            
+            # 프론트엔드에서 count 파라미터를 받았으면 우선 사용 (Gmail fetch count)
+            gmail_fetch_count = data.get('count') or (settings.settings_data.get('gmailFetchCount', 5) if settings else 5)
+            
+            print(f"[📊 메일수] Gmail 가져오기: {gmail_fetch_count}개")
+            print(f"[📊 메일수] DB 저장: 새 메일 모두 저장 (중복 제외)")
+            
+            # Gmail에서는 설정된 개수만큼 가져오되, DB 저장은 DB 저장 개수로 제한
+            count = gmail_fetch_count
+            
+            print(f"[📊 메일수] 실제 Gmail에서 가져올 메일 수: {count} (after_dt={after_dt is not None})")
             
             # 1. Gmail에서 원본 메일 가져오기 (AI 처리 없음)
             print(f"[🔍 디버그] Gmail 연결 시도 중...")
@@ -441,12 +478,15 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
                     else:
                         tag = "보낸"
                     
+                    # 메일 본문 처리 (길이 제한만 적용)
+                    body_content = email_data["body"][:1000]
+                    
                     processed_email = {
                         "id": email_data["id"],
                         "subject": email_data["subject"],
                         "from": email_data["from"],
                         "date": email_data["date"],
-                        "body": email_data["body"][:1000],  # 본문 제한
+                        "body": body_content,
                         "tag": tag,
                         "summary": summary,
                         "classification": classification_result['classification'],
@@ -457,7 +497,7 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
                     
                     processed_emails.append(processed_email)
                     
-                    # ✅ DB에 새 메일 저장
+                    # ✅ DB에 새 메일 저장 (모든 새 메일 저장)
                     print(f"[💾 DB 저장] {email_data['subject'][:30]}...")
                     try:
                         new_mail = Mail(
@@ -518,7 +558,12 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
             return jsonify({
                 "emails": processed_emails,
                 "user_session": session_manager.get_user_key(username)[:8] + "...",
-                "cache_info": f"DB: {len(processed_emails)-new_emails_processed}개, 신규 처리: {new_emails_processed}개"
+                "cache_info": f"DB: {len(processed_emails)-new_emails_processed}개, 신규 처리: {new_emails_processed}개",
+                "fetch_info": {
+                    "gmail_fetched": len(raw_emails),
+                    "processed": len(processed_emails),
+                    "new_ai_processed": new_emails_processed
+                }
             })
             
         except Exception as e:
@@ -540,8 +585,51 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
             if not session_manager.session_exists(sender_email):
                 return jsonify({"error": "로그인이 필요합니다."}), 401
             
-            # 이메일 발송
-            success = email_service.send_email(sender_email, app_password, to, subject, body)
+            # 사용자 설정 가져오기
+            from models.tables import UserSettings
+            
+            # 쓰기 폰트 설정 가져오기
+            write_settings = UserSettings.get_or_create(sender_email, 'GENERAL', 'WRITE')
+            font_family = write_settings.settings_data.get('fontFamily', 'Arial') if write_settings else 'Arial'
+            font_size = write_settings.settings_data.get('fontSize', '14px') if write_settings else '14px'
+            sender_name = write_settings.settings_data.get('senderName', '') if write_settings else ''
+            
+            # HTML 형식으로 폰트 스타일 적용
+            styled_body = f"""
+            <div style="font-family: {font_family}; font-size: {font_size};">
+                {body}
+            </div>
+            """
+            
+            # 서명 추가 (활성화된 경우)
+            from services.signature_service import SignatureService
+            signature_result = SignatureService.get_active_signature(sender_email)
+            if signature_result['success'] and signature_result['signature']:
+                signature = signature_result['signature']
+                styled_body += f"""
+                <br/><br/>
+                <div style="border-top: 1px solid #ccc; padding-top: 10px; margin-top: 20px;">
+                    {signature.get('html_content') if signature.get('is_html') else signature.get('content', '')}
+                </div>
+                """
+            
+            # 보내는 사람 정보 적용 (Gmail 계정 + 사용자 정의 이름)
+            if sender_name:
+                # 이름이 있으면 "이름 <Gmail계정>" 형식으로
+                from_header = f"{sender_name} <{sender_email}>"
+            else:
+                from_header = sender_email
+            
+            # 이메일 발송 (Gmail 계정 사용)
+            success = email_service.send_email(
+                sender_email,  # Gmail 계정 사용
+                app_password, 
+                to, 
+                subject, 
+                styled_body,
+                from_header=from_header,  # 보내는 사람 헤더 추가
+                is_html=True  # HTML 형식으로 전송
+            )
             
             if success:
                 return jsonify({"message": "✅ 메일 전송 성공"}), 200
@@ -633,6 +721,62 @@ def create_email_routes(email_service, ai_models, session_manager, attachment_se
             
         except Exception as e:
             print(f"[❗이메일 검색 오류] {str(e)}")
+            return jsonify({"error": str(e)}), 500
+    
+    @email_bp.route('/api/delete-email', methods=['POST'])
+    def delete_email():
+        """이메일 삭제"""
+        try:
+            data = request.get_json()
+            user_email = data.get("email")
+            email_id = data.get("email_id")
+            
+            if not user_email or not email_id:
+                return jsonify({"error": "이메일과 메일 ID가 필요합니다."}), 400
+            
+            # 사용자 세션 확인
+            if not session_manager.session_exists(user_email):
+                return jsonify({"error": "로그인이 필요합니다."}), 401
+            
+            print(f"[🗑️ 메일 삭제 요청] 사용자: {user_email}, 메일 ID: {email_id}")
+            
+            # DB에서 메일 조회 및 삭제
+            from models.tables import Mail
+            
+            # 메일 ID로 조회 시도
+            mail_to_delete = None
+            try:
+                # 먼저 숫자 ID로 시도
+                mail_to_delete = Mail.query.filter_by(
+                    user_email=user_email,
+                    mail_id=int(email_id)
+                ).first()
+            except ValueError:
+                # 숫자가 아니면 제목으로 조회
+                mail_to_delete = Mail.query.filter_by(
+                    user_email=user_email,
+                    subject=email_id
+                ).first()
+            
+            if not mail_to_delete:
+                return jsonify({"error": "삭제할 메일을 찾을 수 없습니다."}), 404
+            
+            # 메일 삭제
+            deleted_subject = mail_to_delete.subject
+            db.session.delete(mail_to_delete)
+            db.session.commit()
+            
+            print(f"[✅ 메일 삭제 완료] 제목: {deleted_subject}")
+            
+            return jsonify({
+                "success": True,
+                "message": "메일이 삭제되었습니다.",
+                "deleted_subject": deleted_subject
+            })
+            
+        except Exception as e:
+            print(f"[❗메일 삭제 오류] {str(e)}")
+            db.session.rollback()
             return jsonify({"error": str(e)}), 500
     
     return email_bp

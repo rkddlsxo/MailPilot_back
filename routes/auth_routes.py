@@ -44,10 +44,19 @@ def create_auth_routes(session_manager, ai_models=None):
             
             # 세션 생성 또는 복원
             result = session_manager.create_or_restore_session(email, session_id)
+            
+            # Flask 세션에도 저장
+            session['email'] = email
+            session['session_id'] = session_id
 
             # ✅ AI 모델만 초기화 (메일 처리는 별도 요청에서)
             print(f"[🔐 받은 로그인 정보] 이메일: {email}, 앱 비번: {'***' if app_password else '(비어있음)'}")
             print(f"[📬 로그인 완료] 메일 처리는 별도 요청에서 진행됩니다")
+            
+            # 디버깅: 세션 생성 확인
+            print(f"[✅ 세션 생성] 사용자: {email}, 세션 ID: {session_id}")
+            print(f"[✅ 세션 확인] session_exists: {session_manager.session_exists(email)}")
+            print(f"[✅ 활성 세션] {list(session_manager.user_sessions.keys())}")
 
 
             return jsonify({
@@ -58,7 +67,7 @@ def create_auth_routes(session_manager, ai_models=None):
             })
             
         except Exception as e:
-            print(f"[❗로그인 실패] {str(e)}")
+            print(f"[❌ 로그인] {str(e)}")
             return jsonify({'error': str(e)}), 500
     
     @auth_bp.route('/api/logout', methods=['POST'])
@@ -80,8 +89,7 @@ def create_auth_routes(session_manager, ai_models=None):
                 return jsonify({'error': '이메일이 필요합니다.'}), 400
                 
         except Exception as e:
-            
-            print(f"[❗로그아웃 실패] {str(e)}")
+            print(f"[❌ 로그아웃] {str(e)}")
             return jsonify({'error': str(e)}), 500
     
     return auth_bp

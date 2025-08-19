@@ -17,14 +17,14 @@ class Config:
     QWEN_MODEL = "Qwen/Qwen1.5-1.8B-Chat"
     
     # API 토큰 (환경변수에서 가져오기)
-    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'your-nomic-token-hter')  # 실제 토큰으로 교체
+    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'your-nk-token-here')  # 실제 토큰으로 교체
     
     # 이메일 설정
     GMAIL_IMAP_SERVER = "imap.gmail.com"
     GMAIL_SMTP_SERVER = "smtp.gmail.com"
     SMTP_PORT = 465
 
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:비밀번호@localhost/mailpilot'
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://root:root@localhost/mailpilot'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # 캐시 설정
@@ -49,7 +49,7 @@ class Config:
         """토큰 유효성 검사"""
         issues = []
         
-        if cls.NOMIC_TOKEN == 'your-nomic-token-here':
+        if cls.NOMIC_TOKEN == 'your-nk-token-here':
             issues.append("NOMIC_TOKEN이 설정되지 않았습니다.")
 
         if cls.HF_TOKEN == 'your-hf-token-here':

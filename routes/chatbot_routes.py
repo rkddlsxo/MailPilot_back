@@ -37,6 +37,7 @@ def create_chatbot_routes(chatbot_service, session_manager):
             subject = data.get('subject', '')
             body = data.get('body', '')
             current_user_email = data.get('email', '')
+            user_intent = data.get('user_intent', '')  # ✅ 사용자 의도 추가
             
             if not all([sender, subject, body, current_user_email]):
                 return jsonify({'error': '발신자, 제목, 본문, 사용자 이메일이 모두 필요합니다.'}), 400
@@ -46,7 +47,7 @@ def create_chatbot_routes(chatbot_service, session_manager):
                 return jsonify({'error': '로그인이 필요합니다.'}), 401
             
             # 챗봇 서비스로 처리 위임
-            response, status_code = chatbot_service.generate_ai_reply(sender, subject, body, current_user_email)
+            response, status_code = chatbot_service.generate_ai_reply(sender, subject, body, current_user_email, user_intent)
             
             return jsonify(response), status_code
             
