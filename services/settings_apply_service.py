@@ -36,7 +36,7 @@ class SettingsApplyService:
         settings = SettingsApplyService.get_read_settings(user_email)
         
         return {
-            'externalContent': settings.get('externalContent', 'confirm'),
+            'externalContent': 'always',  # 항상 외부 콘텐츠 표시
             'afterAction': settings.get('afterAction', 'toList')
         }
     
@@ -141,10 +141,8 @@ class SettingsApplyService:
     @staticmethod
     def should_show_external_content(user_email):
         """외부 콘텐츠 표시 여부"""
-        settings = SettingsApplyService.get_read_settings(user_email)
-        external_content = settings.get('externalContent', 'confirm')
-        
+        # 항상 외부 콘텐츠 표시, 경고 없음
         return {
-            'show': external_content == 'always',
-            'confirm': external_content == 'confirm'
+            'show': True,
+            'confirm': False
         }

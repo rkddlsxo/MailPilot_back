@@ -5,7 +5,6 @@ from transformers import AutoTokenizer
 import numpy as np
 import os
 import torch
-from datetime import datetime
 
 # Nomic API를 사용할지 ONNX를 사용할지 설정
 USE_ONNX = True  # True: ONNX 모델 사용, False: Nomic API 사용
@@ -39,15 +38,15 @@ class ChatbotService:
         
         # 챗봇 의도 분류용 라벨 (한국어)
         self.candidate_labels = [
-            "한국어 문법과 맞춤법 오류를 교정하고 수정해주세요",
-            "키워드나 제목으로 이메일을 검색하고 찾아주세요",
-            "김철수, 박영희 같은 특정 사람이 보낸 이메일을 찾아주세요",
-            "어제, 오늘, 지난주 등 날짜로 이메일을 검색해주세요", 
-            "최신 메일만, 오래된 메일만 등으로 이메일 목록을 필터링해주세요",
-            "받은메일함 또는 보낸메일함에서만 이메일을 검색해주세요",
-            "오늘 메일 개수, 총 메일 통계 등을 보여주세요",
-            "여러 조건을 조합해서 복합적으로 이메일을 검색해주세요",
-            "폰트 크기, 테마 모드, 발신자 이름, 페이지당 표시 개수, Gmail 개수 등 앱 설정을 변경해주세요"
+            "문법과 맞춤법 오류를 교정해주세요",
+            "키워드로 이메일을 검색해주세요",
+            "특정 사람의 이메일을 찾아주세요",
+            "날짜와 시간으로 이메일을 검색해주세요", 
+            "개수를 제한해서 이메일을 검색해주세요",
+            "받은메일 또는 보낸메일만 검색해주세요",
+            "이메일 통계와 개수를 보여주세요",
+            "복합 조건으로 이메일을 검색해주세요",
+            "애플리케이션 설정을 변경해주세요"
         ]
         
         # 한국어 패턴 매칭
@@ -105,126 +104,6 @@ class ChatbotService:
             if not user_input:
                 return {"error": "입력이 비어있습니다."}, 400
             
-            # 🎯 우선 처리 1: 설정 입력 대기 중인지 확인
-            user_input_stripped = user_input.strip()
-            
-            # 설정 입력 대기 상태 확인
-            try:
-                import os
-                awaiting_name_file = os.path.join("user_sessions", f"{user_email}_awaiting_name.txt")
-                awaiting_font_file = os.path.join("user_sessions", f"{user_email}_awaiting_font.txt")
-                awaiting_theme_file = os.path.join("user_sessions", f"{user_email}_awaiting_theme.txt")
-                
-                # 발신자 이름 대기 중
-                if os.path.exists(awaiting_name_file):
-                    os.remove(awaiting_name_file)  # 상태 파일 삭제
-                    print(f"[📧 발신자 이름 입력 완료] '{user_input_stripped}'")
-                    
-                    # 발신자 이름 설정 API 호출
-                    import requests
-                    response = requests.put(
-                        f'http://localhost:5001/api/settings/GENERAL/WRITE/senderName',
-                        json={
-                            'email': user_email,
-                            'value': user_input_stripped
-                        }
-                    )
-                    
-                    if response.status_code == 200:
-                        print(f"[✅ 설정 완료] 발신자 이름 '{user_input_stripped}'로 설정됨")
-                        result_msg = f"✅ 발신자 이름이 '{user_input_stripped}'(으)로 설정되었습니다! 👤"
-                    else:
-                        print(f"[❌ 설정 실패] API 응답: {response.status_code}")
-                        result_msg = f"❌ 발신자 이름 설정에 실패했습니다."
-                    
-                    processing_time = time.time() - start_time
-                    return {
-                        "response": result_msg,
-                        "action": "settings_control",
-                        "confidence": 0.95,
-                        "processing_time": processing_time
-                    }, 200
-                
-                
-                # 폰트 입력 대기 중
-                elif os.path.exists(awaiting_font_file):
-                    os.remove(awaiting_font_file)  # 상태 파일 삭제
-                    print(f"[🎨 폰트 입력 완료] '{user_input_stripped}'")
-                    
-                    # 폰트 설정 업데이트
-                    from services.settings_service import SettingsService
-                    settings_service = SettingsService()
-                    result = settings_service.set_setting_value(
-                        user_email=user_email,
-                        category='GENERAL',
-                        subcategory='WRITE',
-                        key='fontFamily',
-                        value=user_input_stripped
-                    )
-                    
-                    if result['success']:
-                        print(f"[✅ 폰트 설정 완료] '{user_input_stripped}'로 설정됨")
-                        result_msg = f"✅ 폰트가 '{user_input_stripped}'(으)로 설정되었습니다! 🎨"
-                    else:
-                        print(f"[❌ 폰트 설정 실패] {result.get('error', '알 수 없는 오류')}")
-                        result_msg = f"❌ 폰트 설정 실패: {result.get('error', '알 수 없는 오류')}"
-                    
-                    processing_time = time.time() - start_time
-                    return {
-                        "response": result_msg,
-                        "action": "settings_control",
-                        "confidence": 0.95,
-                        "processing_time": processing_time
-                    }, 200
-                
-                # 테마 입력 대기 중
-                elif os.path.exists(awaiting_theme_file):
-                    os.remove(awaiting_theme_file)  # 상태 파일 삭제
-                    print(f"[🌈 테마 입력 완료] '{user_input_stripped}'")
-                    
-                    # 테마 값 변환
-                    theme_mapping = {
-                        '다크': 'dark', '다크모드': 'dark', '어둡게': 'dark', '검정': 'dark',
-                        '라이트': 'light', '라이트모드': 'light', '밝게': 'light', '흰색': 'light',
-                        '시스템': 'auto', '자동': 'auto', '자동설정': 'auto'
-                    }
-                    
-                    theme_value = theme_mapping.get(user_input_stripped, user_input_stripped.lower())
-                    if theme_value not in ['dark', 'light', 'auto']:
-                        theme_value = 'light'  # 기본값
-                    
-                    # 테마 설정 업데이트
-                    from services.settings_service import SettingsService
-                    settings_service = SettingsService()
-                    result = settings_service.set_setting_value(
-                        user_email=user_email,
-                        category='GENERAL',
-                        subcategory='THEME',
-                        key='appearance',
-                        value=theme_value
-                    )
-                    
-                    if result['success']:
-                        print(f"[✅ 테마 설정 완료] '{theme_value}'로 설정됨")
-                        theme_name = {'dark': '다크 모드', 'light': '라이트 모드', 'auto': '시스템 설정 따르기'}[theme_value]
-                        result_msg = f"✅ 테마가 '{theme_name}'(으)로 설정되었습니다! 🌈"
-                    else:
-                        print(f"[❌ 테마 설정 실패] {result.get('error', '알 수 없는 오류')}")
-                        result_msg = f"❌ 테마 설정 실패: {result.get('error', '알 수 없는 오류')}"
-                    
-                    processing_time = time.time() - start_time
-                    return {
-                        "response": result_msg,
-                        "action": "settings_control",
-                        "confidence": 0.95,
-                        "processing_time": processing_time
-                    }, 200
-                    
-            except Exception as e:
-                print(f"[⚠️ 상태 확인 실패] {e}")
-            
-            
-            
             # 🧠 1단계: 학습된 패턴에서 찾기
             print(f"[🔍 1단계] 학습된 패턴에서 매칭 검색 시작...")
             learned_result = self._try_learned_pattern(user_email, user_input, app_password)
@@ -239,17 +118,12 @@ class ChatbotService:
                     "processing_time": processing_time
                 }, 200
             
-            # 🔍 2단계: Qwen 기반 Intent 분류
-            print(f"[❌ 1단계 결과] 학습된 패턴 없음 - Qwen Intent 분류로 진행")
-            print(f"[🧠 2단계] Qwen 기반 의도 분류 시작...")
+            # 🔍 2단계: Nomic 기반 AI 처리  
+            print(f"[❌ 1단계 결과] 학습된 패턴 없음 - Nomic 임베딩 처리로 진행")
+            print(f"[🧠 2단계] Nomic 기반 의도 분석 시작...")
             
-            # Qwen 기반 의도 분류 (정확함)
-            intent_result = self._classify_intent_with_qwen(user_input)
-            
-            # Qwen 실패 시 Nomic 폴백
-            if not intent_result:
-                print(f"[⚠️ Qwen 실패] Nomic 폴백으로 전환")
-                intent_result = self._analyze_intent(user_input)
+            # Nomic 기반 의도 분석 (안정적)
+            intent_result = self._analyze_intent(user_input)
             
             print(f"[🎯 의도 분석 결과] {intent_result['action']} (신뢰도: {intent_result['confidence']:.3f})")
             print(f"[🔧 분석 방법] {intent_result['method']}")
@@ -470,75 +344,14 @@ class ChatbotService:
             return {'action': 'settings_control', 'confidence': 0.85, 'method': 'qwen_fallback', 'detailed_intent': 'font_settings'}
         elif any(word in user_lower for word in ["다크모드", "라이트모드", "테마"]) and any(word in user_lower for word in ["바꿔", "바꿔줘", "설정", "변경"]):
             return {'action': 'settings_control', 'confidence': 0.85, 'method': 'qwen_fallback', 'detailed_intent': 'theme_settings'}
+        elif any(word in user_lower for word in ["서명"]) and any(word in user_lower for word in ["추가", "수정", "삭제", "변경", "설정"]):
+            return {'action': 'settings_control', 'confidence': 0.85, 'method': 'qwen_fallback', 'detailed_intent': 'signature_settings'}
         else:
             return {'action': 'email_search', 'confidence': 0.7, 'method': 'qwen_fallback', 'detailed_intent': 'general'}
 
-    def _qwen_analyze_intent(self, user_input):
-        """Qwen을 사용한 정확한 의도 분류 (메인)"""
-        try:
-            if not self.ai_models.load_qwen_model():
-                print("[⚠️ Qwen 모델 로딩 실패 - Nomic으로 폴백]")
-                return None
-            
-            prompt = f"""당신은 이메일 클라이언트의 챗봇입니다. 사용자 입력의 의도를 정확히 분류하세요.
-
-가능한 의도:
-1. grammar_correction - 맞춤법/문법 교정 요청
-2. email_search - 키워드로 이메일 검색
-3. person_search - 특정 사람의 이메일 찾기
-4. email_statistics - 이메일 통계 조회
-5. settings_control - 앱 설정 변경 (폰트, 테마, 페이지, 발신자 이름 등)
-6. date_search - 날짜별 이메일 검색
-7. type_search - 받은메일/보낸메일 검색
-8. limit_search - 개수 제한 검색
-
-사용자 입력: "{user_input}"
-
-의도를 한 단어로만 답하세요 (예: settings_control):"""
-            
-            # Qwen 실행
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True).to(self.ai_models.qwen_model.device)
-            
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=50,
-                    temperature=0.1,
-                    do_sample=True,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            response = generated_text[len(prompt):].strip()
-            intent = response.strip().lower()
-            
-            # 유효한 의도인지 확인
-            valid_intents = ['grammar_correction', 'email_search', 'person_search', 
-                           'email_statistics', 'settings_control', 'date_search',
-                           'type_search', 'limit_search']
-            
-            if intent in valid_intents:
-                print(f"[✅ Qwen 의도 분류] {intent} (신뢰도: 높음)")
-                return {'action': intent, 'confidence': 0.95, 'method': 'qwen_main'}
-            else:
-                print(f"[⚠️ Qwen 애매한 응답] {intent}")
-                return None
-                
-        except Exception as e:
-            print(f"[❌ Qwen 의도 분류 오류] {str(e)}")
-            return None
-    
     def _analyze_intent(self, user_input):
-        """의도 분석 (Qwen 우선, Nomic 폴백)"""
-        
-        # 1. Qwen으로 의도 분석 (메인)
-        qwen_result = self._qwen_analyze_intent(user_input)
-        if qwen_result and qwen_result['confidence'] >= 0.9:
-            return qwen_result
-        
-        # 2. Qwen이 애매하면 Nomic 임베딩으로 보조
-        # 영어 Embedding 기반 분류
+        """의도 분석 (영어 embedding + 한국어 키워드)"""
+        # 1. 영어 Embedding 기반 분류
         try:
             text_inputs = [user_input] + self.candidate_labels
             result = self._get_embeddings(text_inputs)
@@ -557,53 +370,47 @@ class ChatbotService:
             embedding_score = 0.0
             embedding_label = "unknown"
         
-        # 3. 한국어 키워드 기반 분류
+        # 2. 한국어 키워드 기반 분류
         korean_result = self._analyze_korean_patterns(user_input)
         
         # 3. 최종 의도 결정
         embedding_action_map = {
-            "한국어 문법과 맞춤법 오류를 교정하고 수정해주세요": "grammar_correction",
-            "키워드나 제목으로 이메일을 검색하고 찾아주세요": "email_search",
-            "김철수, 박영희 같은 특정 사람이 보낸 이메일을 찾아주세요": "person_search",
-            "어제, 오늘, 지난주 등 날짜로 이메일을 검색해주세요": "email_search", 
-            "최신 메일만, 오래된 메일만 등으로 이메일 목록을 필터링해주세요": "email_search",
-            "받은메일함 또는 보낸메일함에서만 이메일을 검색해주세요": "email_search",
-            "오늘 메일 개수, 총 메일 통계 등을 보여주세요": "email_statistics",
-            "여러 조건을 조합해서 복합적으로 이메일을 검색해주세요": "email_search",
-            "폰트 크기, 테마 모드, 발신자 이름, 페이지당 표시 개수, Gmail 개수 등 앱 설정을 변경해주세요": "settings_control"
+            "문법과 맞춤법 오류를 교정해주세요": "grammar_correction",
+            "키워드로 이메일을 검색해주세요": "email_search",
+            "특정 사람의 이메일을 찾아주세요": "person_search",
+            "날짜와 시간으로 이메일을 검색해주세요": "email_search", 
+            "개수를 제한해서 이메일을 검색해주세요": "email_search",
+            "받은메일 또는 보낸메일만 검색해주세요": "email_search",
+            "이메일 통계와 개수를 보여주세요": "email_statistics",
+            "복합 조건으로 이메일을 검색해주세요": "email_search",
+            "애플리케이션 설정을 변경해주세요": "settings_control"
         }
         
         embedding_action = embedding_action_map.get(embedding_label, "unknown")
         embedding_threshold = 0.25
         
-        # 4. 최종 의도 결정 (Qwen 결과 우선)
-        # Qwen 결과가 있으면 우선 사용
-        if qwen_result:
-            # Nomic이나 한국어 패턴으로 보완
-            if embedding_score >= 0.7 and embedding_action == qwen_result['action']:
-                # Qwen과 Nomic이 일치하면 신뢰도 상승
-                qwen_result['confidence'] = min(0.99, qwen_result['confidence'] + 0.1)
-                print(f"[🎯 의도 일치] Qwen과 Nomic 일치 - 신뢰도 상승")
-            return qwen_result
-        
-        # Qwen이 실패했을 때 기존 로직
+        # 최종 결정 (세부 의도 포함)
         if korean_result["confidence"] >= 0.3 and korean_result["confidence"] > embedding_score:
             return {
                 'action': korean_result["action"],
                 'confidence': korean_result["confidence"],
-                'method': 'korean_pattern',
+                'method': 'korean_keywords',
                 'detailed_intent': korean_result.get('detailed_intent', '')
             }
         elif embedding_score >= embedding_threshold:
             return {
                 'action': embedding_action,
                 'confidence': embedding_score,
-                'method': 'nomic_fallback',
-                'detailed_intent': embedding_label
+                'method': 'english_embedding',
+                'detailed_intent': embedding_label  # 세부 의도 추가
             }
         else:
-            # 모든 방법이 실패하면 Qwen 폴백 사용
-            return self._qwen_fallback_analyze(user_input)
+            return {
+                'action': 'unknown',
+                'confidence': max(korean_result["confidence"], embedding_score),
+                'method': 'low_confidence',
+                'detailed_intent': ''
+            }
     
     def _analyze_korean_patterns(self, user_input):
         """한국어 패턴 분석"""
@@ -644,32 +451,19 @@ class ChatbotService:
                 
                 # settings_control는 특별 처리 (폰트/테마/설정 관련 키워드 조합)
                 if pattern_name == "settings_control":
-                    # 설정 관련 키워드 정의
+                    # 폰트 관련 키워드가 있으면 신뢰도 대폭 증가
                     font_keywords = ["폰트", "글꼴", "크기", "글자", "px", "포인트"]
                     theme_keywords = ["테마", "다크모드", "라이트모드", "어두운", "밝은"]
-                    sender_keywords = ["이름", "발신자", "보내는", "사람", "sender"]
-                    gmail_keywords = ["gmail", "메일", "개수", "가져오", "fetch"]
-                    page_keywords = ["페이지", "목록", "리스트", "보여", "표시", "개씩", "씩", "한 페이지"]
-                    action_keywords = ["바꿔", "바꿔줘", "바꿔주세요", "변경", "설정", "조절", "으로", "설정해", "설정해줘", "해줘"]
+                    action_keywords = ["바꿔", "바꿔줘", "바꿔주세요", "변경", "설정", "조절", "으로"]
                     
                     has_font = any(kw in user_input_lower for kw in font_keywords)
                     has_theme = any(kw in user_input_lower for kw in theme_keywords)
-                    has_sender = any(kw in user_input_lower for kw in sender_keywords)
-                    has_gmail = any(kw in user_input_lower for kw in gmail_keywords)
-                    has_page = any(kw in user_input_lower for kw in page_keywords)
                     has_action = any(kw in user_input_lower for kw in action_keywords)
                     
-                    # 확실한 설정 변경 패턴들
-                    if (has_font or has_theme or has_sender or has_gmail or has_page) and has_action:
+                    if (has_font or has_theme) and has_action:
                         confidence = 0.95  # 매우 높은 신뢰도로 설정
-                        matched_keywords.extend(["확실한_설정_변경"])
-                        setting_type = ""
-                        if has_font: setting_type = "폰트"
-                        elif has_theme: setting_type = "테마"
-                        elif has_sender: setting_type = "발신자"
-                        elif has_gmail: setting_type = "Gmail"
-                        elif has_page: setting_type = "페이지"
-                        print(f"[🎯 설정 강화] {setting_type}+액션 조합 감지 → 신뢰도 0.95")
+                        matched_keywords.extend(["설정_조합_매칭"])
+                        print(f"[🎯 설정 강화] 폰트/테마+액션 조합 감지 → 신뢰도 0.95")
                     elif has_action and len(matched_keywords) >= 2:
                         confidence += 0.4  # 액션 키워드 + 다수 매칭시 신뢰도 증가
                         print(f"[🎯 설정 강화] 액션+복수키워드 조합 → 신뢰도 +0.4")
@@ -687,8 +481,11 @@ class ChatbotService:
     def _handle_grammar_correction(self, user_input):
         """문법 교정 처리"""
         try:
-            # Qwen으로 교정할 텍스트 정확 추출
-            correction_text = self._extract_grammar_text_with_qwen(user_input)
+            # 교정할 텍스트 추출
+            correction_text = user_input
+            remove_words = ["교정해주세요", "교정해줘", "맞춤법", "문법", "correct", "spelling", "check", "fix"]
+            for word in remove_words:
+                correction_text = correction_text.replace(word, "").strip()
             
             if not correction_text:
                 return "📝 **문법 및 맞춤법 교정**\n\n교정하고 싶은 텍스트를 입력해주세요.\n\n예시: '안녕하세요. 제가 오늘 회의에 참석못할것 같습니다' 교정해주세요"
@@ -811,34 +608,30 @@ class ChatbotService:
         try:
             print(f"[🔍 고급 검색 시작] 입력: '{user_input}'")
             
-            # Qwen으로 날짜, 개수 제한 파싱
-            qwen_date = self._extract_date_with_qwen(user_input)
-            date_filter = self._convert_date_type_to_filter(qwen_date) if qwen_date else None
-            
-            qwen_limit = self._extract_limit_with_qwen(user_input)
-            limit_count = qwen_limit
+            # 날짜, 개수 제한, 메일 타입 파싱
+            date_filter = self._parse_date_keywords(user_input)
+            limit_count = self._parse_limit_keywords(user_input)
             mail_type_filter = self._parse_mail_type_keywords(user_input)
             
             # 검색 키워드 추출 (파싱된 키워드들 제거)
-            # Qwen으로 검색 키워드 정확 추출
-            search_keywords = self._extract_keyword_with_qwen(user_input)
+            search_keywords = user_input.lower()
             
-            if not search_keywords:
-                # 폴백: 기존 방식으로 추출
-                search_keywords = user_input.lower()
-                remove_words = [
-                    "찾아줘", "찾아주세요", "검색해줘", "검색", "find", "search", "메일", "이메일", "email",
-                    "오늘", "어제", "이번주", "이번 주", "지난주", "이번달", "이번 달", "지난달",
-                    "today", "yesterday", "this week", "last week", "this month", "last month",
-                    "받은", "보낸", "받은메일", "보낸메일", "수신", "발신", "inbox", "sent",
-                    "개만", "개까지", "최근", "최신", "처음", "상위"
-                ]
-                import re
-                search_keywords = re.sub(r'\d+\s*개\s*(만|까지)*', '', search_keywords)
-                search_keywords = re.sub(r'최근\s*\d+\s*일', '', search_keywords)
-                for word in remove_words:
-                    search_keywords = search_keywords.replace(word, "").strip()
-                print(f"[⚠️ 폴백] 기존 방식으로 추출된 키워드: '{search_keywords}'")
+            # 제거할 단어들 (기존 + 새로 추가)
+            remove_words = [
+                "찾아줘", "찾아주세요", "검색해줘", "검색", "find", "search", "메일", "이메일", "email",
+                "오늘", "어제", "이번주", "이번 주", "지난주", "이번달", "이번 달", "지난달",
+                "today", "yesterday", "this week", "last week", "this month", "last month",
+                "받은", "보낸", "받은메일", "보낸메일", "수신", "발신", "inbox", "sent",
+                "개만", "개까지", "최근", "최신", "처음", "상위"
+            ]
+            
+            # 숫자+개 패턴도 제거
+            import re
+            search_keywords = re.sub(r'\d+\s*개\s*(만|까지)*', '', search_keywords)
+            search_keywords = re.sub(r'최근\s*\d+\s*일', '', search_keywords)
+            
+            for word in remove_words:
+                search_keywords = search_keywords.replace(word, "").strip()
             
             # 남은 키워드가 없으면 기본 안내
             if not search_keywords and not date_filter and not mail_type_filter:
@@ -932,8 +725,8 @@ class ChatbotService:
     def _handle_person_search(self, user_input, user_email, app_password):
         """특정 사람 메일 검색"""
         try:
-            # Qwen으로 사람 이름/이메일 정확 추출
-            extract_type, search_target = self._extract_person_or_email_with_qwen(user_input)
+            # Qwen으로 사람 이름/이메일 추출
+            search_target = self._extract_search_target_with_qwen(user_input)
             
             if not search_target or len(search_target.strip()) < 2:
                 # 간단한 추출 방법
@@ -952,15 +745,12 @@ class ChatbotService:
                     return "👤 **사람별 메일 검색**\n\n찾고 싶은 사람의 이름이나 이메일 주소를 명확히 알려주세요.\n\n예시:\n• '김철수님의 메일'\n• 'john@company.com 메일'"
             
             try:
-                # Qwen으로 고급 검색 옵션 파싱
-                qwen_date = self._extract_date_with_qwen(user_input)
-                date_filter = self._convert_date_type_to_filter(qwen_date) if qwen_date else None
-                
-                qwen_limit = self._extract_limit_with_qwen(user_input)
-                limit_count = qwen_limit
+                # 고급 검색 옵션 파싱
+                date_filter = self._parse_date_keywords(user_input)
+                limit_count = self._parse_limit_keywords(user_input)
                 mail_type_filter = self._parse_mail_type_keywords(user_input)
                 
-                print(f"[🔍 사람별 고급 검색] 타입: {extract_type}, 대상: '{search_target}'")
+                print(f"[🔍 사람별 고급 검색] 대상: '{search_target}'")
                 
                 # ✅ DB에서 사람별 이메일 검색 실행 (고급 옵션 포함)
                 found_emails = self._search_emails_in_db(
@@ -1020,529 +810,6 @@ class ChatbotService:
         except Exception as e:
             return "❌ 사람 검색 처리 중 오류가 발생했습니다."
     
-    def _extract_person_or_email_with_qwen(self, user_input):
-        """Qwen을 사용하여 사람 이름이나 이메일 주소를 정확히 추출"""
-        try:
-            print(f"[🤖 Qwen 추출 시작] 사람/이메일 추출: '{user_input}'")
-            
-            # Qwen 모델 로딩
-            if not hasattr(self.ai_models, 'qwen_model') or self.ai_models.qwen_model is None:
-                print("[🤖 Qwen 모델 로딩 시작]")
-                self.ai_models.load_qwen_model()
-            
-            prompt = f"""한국어 명령에서 사람 이름이나 이메일 주소를 추출하세요.
-형식: type|값
-
-타입:
-- person: 사람 이름 (김철수, 박영희, 교수님 등)
-- email: 이메일 주소 (@포함)
-
-예시:
-"최수운 이메일 찾아줘" → person|최수운
-"김철수님 메일 보여줘" → person|김철수
-"abc@gmail.com에서 온 메일" → email|abc@gmail.com
-"교수님 메일" → person|교수님
-"John의 메일" → person|John
-"팀장님 이메일" → person|팀장
-
-입력: "{user_input}"
-결과:"""
-            
-            # 토큰화
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt")
-            
-            # 생성
-            import torch
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=20,  # 짧은 응답만 필요
-                    do_sample=False,
-                    temperature=0.1,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # 응답 추출
-            if "결과:" in generated_text:
-                qwen_response = generated_text.split("결과:")[-1].strip()
-            else:
-                qwen_response = generated_text[len(prompt):].strip()
-            
-            print(f"[🤖 Qwen 응답] {qwen_response}")
-            
-            # 응답 파싱: "type|value" 형식
-            lines = qwen_response.strip().split('\n')
-            for line in lines:
-                line = line.strip()
-                if '|' in line and not line.startswith('-'):
-                    parts = line.split('|', 1)
-                    if len(parts) == 2:
-                        extract_type = parts[0].strip()
-                        extract_value = parts[1].strip()
-                        
-                        # 유효한 타입인지 확인
-                        if extract_type in ['person', 'email']:
-                            print(f"[✅ 추출 성공] {extract_type} = '{extract_value}'")
-                            return extract_type, extract_value
-            
-            print(f"[❌ 추출 실패] 파싱할 수 없는 응답: '{qwen_response}'")
-            return None, None
-            
-        except Exception as e:
-            print(f"[❗ Qwen 추출 오류] {str(e)}")
-            return None, None
-
-    def _extract_grammar_text_with_qwen(self, user_input):
-        """Qwen을 사용하여 교정할 텍스트만 정확히 추출"""
-        try:
-            print(f"[🤖 Qwen 교정 텍스트 추출] '{user_input}'")
-            
-            # Qwen 모델 로딩
-            if not hasattr(self.ai_models, 'qwen_model') or self.ai_models.qwen_model is None:
-                print("[🤖 Qwen 모델 로딩 시작]")
-                self.ai_models.load_qwen_model()
-            
-            prompt = f"""한국어 명령에서 교정할 텍스트만 추출하세요.
-형식: text|교정할텍스트
-
-규칙:
-- 교정해줘, 맞춤법, 문법 등의 명령어는 제거
-- 실제 교정이 필요한 텍스트만 추출
-
-예시:
-"안녕하세요. 제가 오늘 회의에 참석못할것 같습니다 교정해주세요" → text|안녕하세요. 제가 오늘 회의에 참석못할것 같습니다
-"'I can't attend meeting today' 교정해줘" → text|I can't attend meeting today
-"맞춤법 검사: 안녕하새요" → text|안녕하새요
-"문법 체크해줘 오늘 저녁에 뭐 먹을까요" → text|오늘 저녁에 뭐 먹을까요
-
-입력: "{user_input}"
-결과:"""
-            
-            # 토큰화
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt")
-            
-            # 생성
-            import torch
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=100,  # 교정할 텍스트는 길 수 있음
-                    do_sample=False,
-                    temperature=0.1,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # 응답 추출
-            if "결과:" in generated_text:
-                qwen_response = generated_text.split("결과:")[-1].strip()
-            else:
-                qwen_response = generated_text[len(prompt):].strip()
-            
-            print(f"[🤖 Qwen 응답] {qwen_response}")
-            
-            # 응답 파싱: "text|value" 형식
-            lines = qwen_response.strip().split('\n')
-            for line in lines:
-                line = line.strip()
-                if '|' in line and line.startswith('text|'):
-                    parts = line.split('|', 1)
-                    if len(parts) == 2:
-                        extracted_text = parts[1].strip()
-                        # 따옴표 제거
-                        if extracted_text.startswith('"') and extracted_text.endswith('"'):
-                            extracted_text = extracted_text[1:-1]
-                        if extracted_text.startswith("'") and extracted_text.endswith("'"):
-                            extracted_text = extracted_text[1:-1]
-                        
-                        print(f"[✅ 교정 텍스트 추출 성공] '{extracted_text}'")
-                        return extracted_text
-            
-            print(f"[❌ 교정 텍스트 추출 실패] 파싱할 수 없는 응답: '{qwen_response}'")
-            return None
-            
-        except Exception as e:
-            print(f"[❗ Qwen 교정 텍스트 추출 오류] {str(e)}")
-            return None
-
-    def _extract_keyword_with_qwen(self, user_input):
-        """Qwen을 사용하여 검색 키워드만 정확히 추출"""
-        try:
-            print(f"[🤖 Qwen 키워드 추출] '{user_input}'")
-            
-            # Qwen 모델 로딩
-            if not hasattr(self.ai_models, 'qwen_model') or self.ai_models.qwen_model is None:
-                print("[🤖 Qwen 모델 로딩 시작]")
-                self.ai_models.load_qwen_model()
-            
-            prompt = f"""한국어 명령에서 검색 키워드만 추출하세요.
-형식: keyword|추출된키워드
-
-규칙:
-- 메일, 이메일, 찾아줘, 검색, 보여줘는 반드시 제거
-- 핵심 검색어만 남기기
-- 영어 단어도 그대로 유지
-
-예시:
-"회의 관련 메일 검색해줘" → keyword|회의 관련
-"ngrok 이메일을 찾아줘" → keyword|ngrok
-"notion team 이메일을 찾아줘" → keyword|notion team  
-"zoom 관련 메일" → keyword|zoom
-"프로젝트 업데이트 찾아줘" → keyword|프로젝트 업데이트
-"ChatGPT 메일 보여줘" → keyword|ChatGPT
-
-입력: "{user_input}"
-결과:"""
-            
-            # 토큰화
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt")
-            
-            # 생성
-            import torch
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=30,  # 키워드는 짧음
-                    do_sample=False,
-                    temperature=0.1,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # 응답 추출
-            if "결과:" in generated_text:
-                qwen_response = generated_text.split("결과:")[-1].strip()
-            else:
-                qwen_response = generated_text[len(prompt):].strip()
-            
-            print(f"[🤖 Qwen 응답] {qwen_response}")
-            
-            # 응답 파싱: "keyword|value" 형식
-            lines = qwen_response.strip().split('\n')
-            for line in lines:
-                line = line.strip()
-                if '|' in line and line.startswith('keyword|'):
-                    parts = line.split('|', 1)
-                    if len(parts) == 2:
-                        extracted_keyword = parts[1].strip()
-                        print(f"[✅ 키워드 추출 성공] '{extracted_keyword}'")
-                        return extracted_keyword
-            
-            print(f"[❌ 키워드 추출 실패] 파싱할 수 없는 응답: '{qwen_response}'")
-            return None
-            
-        except Exception as e:
-            print(f"[❗ Qwen 키워드 추출 오류] {str(e)}")
-            return None
-
-    def _extract_date_with_qwen(self, user_input):
-        """Qwen을 사용하여 날짜 정보 추출"""
-        try:
-            print(f"[🤖 Qwen 날짜 추출] '{user_input}'")
-            
-            # Qwen 모델 로딩
-            if not hasattr(self.ai_models, 'qwen_model') or self.ai_models.qwen_model is None:
-                print("[🤖 Qwen 모델 로딩 시작]")
-                self.ai_models.load_qwen_model()
-            
-            prompt = f"""한국어 명령에서 날짜 정보를 추출하세요.
-형식: date|날짜타입
-
-날짜 타입:
-- today: 오늘
-- yesterday: 어제
-- this_week: 이번주, 이번 주
-- last_week: 지난주, 지난 주  
-- this_month: 이번달, 이번 달
-- last_month: 지난달, 지난 달
-- none: 날짜 없음
-
-예시:
-"오늘 메일 찾아줘" → date|today
-"어제 받은 메일" → date|yesterday
-"지난주 회의록" → date|last_week
-"이번달 보고서" → date|this_month
-"회의 메일 찾아줘" → date|none
-
-입력: "{user_input}"
-결과:"""
-            
-            # 토큰화
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt")
-            
-            # 생성
-            import torch
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=15,  # 날짜 정보는 매우 짧음
-                    do_sample=False,
-                    temperature=0.1,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # 응답 추출
-            if "결과:" in generated_text:
-                qwen_response = generated_text.split("결과:")[-1].strip()
-            else:
-                qwen_response = generated_text[len(prompt):].strip()
-            
-            print(f"[🤖 Qwen 응답] {qwen_response}")
-            
-            # 응답 파싱: "date|value" 형식
-            lines = qwen_response.strip().split('\n')
-            for line in lines:
-                line = line.strip()
-                if '|' in line and line.startswith('date|'):
-                    parts = line.split('|', 1)
-                    if len(parts) == 2:
-                        date_type = parts[1].strip()
-                        if date_type != "none":
-                            print(f"[✅ 날짜 추출 성공] '{date_type}'")
-                            return date_type
-            
-            print(f"[📅 날짜 없음] 날짜 키워드가 없습니다")
-            return None
-            
-        except Exception as e:
-            print(f"[❗ Qwen 날짜 추출 오류] {str(e)}")
-            return None
-
-    def _extract_limit_with_qwen(self, user_input):
-        """Qwen을 사용하여 개수 제한 정보 추출"""
-        try:
-            print(f"[🤖 Qwen 개수 추출] '{user_input}'")
-            
-            # Qwen 모델 로딩
-            if not hasattr(self.ai_models, 'qwen_model') or self.ai_models.qwen_model is None:
-                print("[🤖 Qwen 모델 로딩 시작]")
-                self.ai_models.load_qwen_model()
-            
-            prompt = f"""한국어 명령에서 개수 제한을 추출하세요.
-형식: limit|숫자
-
-규칙:
-- 숫자+개 패턴 찾기
-- 개수 제한이 없으면 none
-
-예시:
-"메일 5개만 찾아줘" → limit|5
-"최신 메일 10개 보여줘" → limit|10
-"3개만 표시해줘" → limit|3
-"회의 메일 찾아줘" → limit|none
-"상위 20개 메일" → limit|20
-
-입력: "{user_input}"
-결과:"""
-            
-            # 토큰화
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt")
-            
-            # 생성
-            import torch
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=15,  # 개수 정보는 매우 짧음
-                    do_sample=False,
-                    temperature=0.1,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # 응답 추출
-            if "결과:" in generated_text:
-                qwen_response = generated_text.split("결과:")[-1].strip()
-            else:
-                qwen_response = generated_text[len(prompt):].strip()
-            
-            print(f"[🤖 Qwen 응답] {qwen_response}")
-            
-            # 응답 파싱: "limit|number" 형식
-            lines = qwen_response.strip().split('\n')
-            for line in lines:
-                line = line.strip()
-                if '|' in line and line.startswith('limit|'):
-                    parts = line.split('|', 1)
-                    if len(parts) == 2:
-                        limit_str = parts[1].strip()
-                        if limit_str != "none" and limit_str.isdigit():
-                            limit_num = int(limit_str)
-                            print(f"[✅ 개수 추출 성공] {limit_num}개")
-                            return limit_num
-            
-            print(f"[🔢 개수 없음] 개수 제한이 없습니다")
-            return None
-            
-        except Exception as e:
-            print(f"[❗ Qwen 개수 추출 오류] {str(e)}")
-            return None
-
-    def _convert_date_type_to_filter(self, date_type):
-        """Qwen에서 추출한 날짜 타입을 필터로 변환"""
-        from datetime import datetime, timedelta
-        
-        today = datetime.now()
-        
-        if date_type == "today":
-            start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-            return {
-                'type': 'today',
-                'start_date': start_date,
-                'end_date': end_date
-            }
-        elif date_type == "yesterday":
-            yesterday = today - timedelta(days=1)
-            start_date = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = yesterday.replace(hour=23, minute=59, second=59, microsecond=999999)
-            return {
-                'type': 'yesterday',
-                'start_date': start_date,
-                'end_date': end_date
-            }
-        elif date_type == "this_week":
-            days_since_monday = today.weekday()
-            this_monday = today - timedelta(days=days_since_monday)
-            start_date = this_monday.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-            return {
-                'type': 'this_week',
-                'start_date': start_date,
-                'end_date': end_date
-            }
-        elif date_type == "last_week":
-            days_since_monday = today.weekday()
-            last_monday = today - timedelta(days=days_since_monday + 7)
-            last_sunday = last_monday + timedelta(days=6)
-            start_date = last_monday.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = last_sunday.replace(hour=23, minute=59, second=59, microsecond=999999)
-            return {
-                'type': 'last_week',
-                'start_date': start_date,
-                'end_date': end_date
-            }
-        elif date_type == "this_month":
-            first_day_this_month = today.replace(day=1)
-            start_date = first_day_this_month.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-            return {
-                'type': 'this_month',
-                'start_date': start_date,
-                'end_date': end_date
-            }
-        elif date_type == "last_month":
-            first_day_this_month = today.replace(day=1)
-            last_day_last_month = first_day_this_month - timedelta(days=1)
-            first_day_last_month = last_day_last_month.replace(day=1)
-            start_date = first_day_last_month.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = last_day_last_month.replace(hour=23, minute=59, second=59, microsecond=999999)
-            return {
-                'type': 'last_month',
-                'start_date': start_date,
-                'end_date': end_date
-            }
-        
-        return None
-
-    def _classify_intent_with_qwen(self, user_input):
-        """Qwen을 사용하여 사용자 의도 분류"""
-        try:
-            print(f"[🤖 Qwen Intent 분류] '{user_input}'")
-            
-            # Qwen 모델 로딩
-            if not hasattr(self.ai_models, 'qwen_model') or self.ai_models.qwen_model is None:
-                print("[🤖 Qwen 모델 로딩 시작]")
-                self.ai_models.load_qwen_model()
-            
-            prompt = f"""한국어 명령의 의도를 분류하세요.
-형식: intent|의도타입
-
-의도 타입:
-- grammar_correction: 문법/맞춤법 교정 요청
-- email_search: 키워드로 메일 검색
-- person_search: 특정 사람의 메일 검색  
-- email_statistics: 메일 개수/통계 조회
-- settings_control: 앱 설정 변경
-- generate_ai_reply: AI 답장 생성
-
-예시:
-"안녕하세요 교정해주세요" → intent|grammar_correction
-"회의 관련 메일 찾아줘" → intent|email_search
-"notion team 이메일 찾아줘" → intent|email_search
-"김철수님 메일 보여줘" → intent|person_search
-"오늘 메일 몇 개?" → intent|email_statistics
-"폰트 크기 18로 바꿔줘" → intent|settings_control
-"답장 생성해줘" → intent|generate_ai_reply
-
-입력: "{user_input}"
-결과:"""
-            
-            # 토큰화
-            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt")
-            
-            # 생성
-            import torch
-            with torch.no_grad():
-                outputs = self.ai_models.qwen_model.generate(
-                    inputs.input_ids,
-                    max_new_tokens=20,  # Intent는 짧음
-                    do_sample=False,
-                    temperature=0.1,
-                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
-                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
-                )
-            
-            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
-            
-            # 응답 추출
-            if "결과:" in generated_text:
-                qwen_response = generated_text.split("결과:")[-1].strip()
-            else:
-                qwen_response = generated_text[len(prompt):].strip()
-            
-            print(f"[🤖 Qwen 응답] {qwen_response}")
-            
-            # 응답 파싱: "intent|type" 형식
-            lines = qwen_response.strip().split('\n')
-            for line in lines:
-                line = line.strip()
-                if '|' in line and line.startswith('intent|'):
-                    parts = line.split('|', 1)
-                    if len(parts) == 2:
-                        intent_type = parts[1].strip()
-                        valid_intents = [
-                            'grammar_correction', 'email_search', 'person_search',
-                            'email_statistics', 'settings_control', 'generate_ai_reply'
-                        ]
-                        if intent_type in valid_intents:
-                            print(f"[✅ Intent 분류 성공] '{intent_type}'")
-                            return {
-                                'action': intent_type,
-                                'confidence': 0.9,  # Qwen은 높은 신뢰도
-                                'method': 'qwen_intent',
-                                'detailed_intent': f'{intent_type} classified by Qwen'
-                            }
-            
-            print(f"[❌ Intent 분류 실패] 파싱할 수 없는 응답: '{qwen_response}'")
-            return None
-            
-        except Exception as e:
-            print(f"[❗ Qwen Intent 분류 오류] {str(e)}")
-            return None
-
     def _extract_search_target_with_qwen(self, text):
         """Qwen을 이용하여 검색 대상 추출"""
         # Qwen 모델이 로딩되지 않았다면 로딩 시도
@@ -1810,37 +1077,23 @@ class ChatbotService:
         """개수 제한 검색 전용 핸들러"""
         print(f"[🔢 개수 제한 검색] 입력: '{user_input}'")
         
-        # Qwen으로 개수 제한 추출
-        qwen_limit = self._extract_limit_with_qwen(user_input)
-        limit_count = qwen_limit if qwen_limit else 5  # 기본 5개
+        # 개수 제한을 우선적으로 파싱
+        limit_count = self._parse_limit_keywords(user_input)
         
-        # Qwen으로 날짜 필터 추출  
-        qwen_date = self._extract_date_with_qwen(user_input)
-        date_filter = self._convert_date_type_to_filter(qwen_date) if qwen_date else None
-        
+        if not limit_count:
+            # 개수가 명시되지 않으면 기본 5개
+            limit_count = 5
+            
+        # 추가 필터 파싱
+        date_filter = self._parse_date_keywords(user_input)
         mail_type_filter = self._parse_mail_type_keywords(user_input)
         
-        # 개수 제한 검색 (키워드 없이 최신 메일만)
-        print(f"[🔢 제한 검색 실행] 개수: {limit_count}개")
-        
-        found_emails = self._search_emails_in_db(
-            user_email, 
-            search_keywords="",  # 키워드 없음
-            max_results=limit_count,
-            date_filter=date_filter,
-            mail_type_filter=mail_type_filter,
-            limit_count=limit_count
+        # 개수 중심 검색 실행
+        return self._execute_search_with_filters(
+            user_email, app_password, user_input,
+            date_filter, limit_count, mail_type_filter,
+            focus="limit"
         )
-        
-        if found_emails:
-            result = f"📬 **최신 메일 {limit_count}개**\n\n"
-            for i, mail_info in enumerate(found_emails, 1):
-                result += f"**{i}. {mail_info['subject']}**\n"
-                result += f"👤 {mail_info['from']}\n"
-                result += f"📅 {mail_info['date']}\n\n"
-            return result
-        else:
-            return f"📭 메일이 없습니다."
     
     def _handle_type_search(self, user_input, user_email, app_password):
         """메일 타입별 검색 전용 핸들러"""
@@ -2366,88 +1619,96 @@ Reply:
             print(f"[❗개수 파싱 오류] {str(e)}")
             return None
     
-    def _extract_settings_with_keywords(self, user_input):
-        """키워드 기반으로 설정값을 추출"""
+    def _extract_settings_with_qwen(self, user_input):
+        """Qwen을 사용해서 설정값을 추출"""
         try:
-            print(f"[🔍 키워드 설정 추출] 입력: '{user_input}'")
+            print(f"[🤖 Qwen 설정 추출] 입력: '{user_input}'")
             
-            user_lower = user_input.lower()
+            prompt = f"""사용자의 설정 변경 명령을 분석해서 설정 정보를 추출해주세요.
+
+명령: "{user_input}"
+
+가능한 설정 타입과 값:
+1. font_size: 10px~22px (예: 14px, 16px, 18px)
+2. font_family: Arial, 맑은고딕, 돋움, 굴림, 바탕, 궁서, Times, Helvetica, Verdana, Georgia, Courier, 시스템기본
+3. theme: dark, light, auto
+4. gmail_count: 3~100 (Gmail 가져오기 개수)
+5. page_size: 3~50 (페이지당 표시 개수)
+6. sender_name: 문자열 (보내는 이름)
+7. signature: add|edit|delete|toggle (서명 관리)
+
+자연어 이해:
+- "크게", "더 크게" → 현재+2px
+- "작게", "더 작게" → 현재-2px  
+- "적당히", "보통으로" → 14px
+- "어둡게", "다크모드" → dark
+- "밝게", "라이트모드" → light
+
+응답 형식: setting_type|setting_value
+
+예시:
+"폰트 크기 18로" → font_size|18px
+"더 크게 해줘" → font_size|16px
+"다크모드로 바꿔" → theme|dark
+"Arial 폰트로" → font_family|Arial
+"메일 50개 가져와" → gmail_count|50
+
+분석:"""
+
+            if not self.ai_models.load_qwen_model():
+                return None, None
             
-            # 테마 설정 감지
-            if any(keyword in user_lower for keyword in ['다크모드', '다크 모드', 'dark', '어두운']):
-                return 'theme', 'dark'
-            elif any(keyword in user_lower for keyword in ['라이트모드', '라이트 모드', 'light', '밝은', '기본']):
-                return 'theme', 'light'
-            elif any(keyword in user_lower for keyword in ['자동', 'auto', '시스템']):
-                return 'theme', 'auto'
+            # Qwen 실행
+            inputs = self.ai_models.qwen_tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True).to(self.ai_models.qwen_model.device)
             
-            # 폰트 크기 설정 감지
-            if any(keyword in user_lower for keyword in ['폰트', '글자', '크기', 'font', 'size']):
-                import re
-                # 숫자 추출
-                numbers = re.findall(r'\d+', user_input)
-                if numbers:
-                    size = int(numbers[0])
-                    if 10 <= size <= 22:  # 유효한 폰트 크기 범위
-                        return 'fontSize', f'{size}px'
+            with torch.no_grad():
+                outputs = self.ai_models.qwen_model.generate(
+                    inputs.input_ids,
+                    max_new_tokens=50,
+                    temperature=0.1,
+                    do_sample=True,
+                    eos_token_id=self.ai_models.qwen_tokenizer.eos_token_id,
+                    pad_token_id=self.ai_models.qwen_tokenizer.pad_token_id
+                )
             
-            # 폰트 종류 설정 감지
-            font_keywords = ['arial', 'helvetica', '나눔고딕', 'nanumgothic', '맑은고딕', 'malgun', 'times', '궁서']
-            for font in font_keywords:
-                if font in user_lower:
-                    return 'fontFamily', font
+            generated_text = self.ai_models.qwen_tokenizer.decode(outputs[0], skip_special_tokens=True)
             
-            # Gmail 가져오기 개수 설정
-            if any(keyword in user_lower for keyword in ['gmail', '지메일', '가져오기', '개수']):
-                import re
-                numbers = re.findall(r'\d+', user_input)
-                if numbers:
-                    count = int(numbers[0])
-                    if 10 <= count <= 100:  # 유효한 범위
-                        return 'gmailFetchCount', str(count)
+            # 응답 추출
+            if "분석:" in generated_text:
+                qwen_response = generated_text.split("분석:")[-1].strip()
+            else:
+                qwen_response = generated_text[len(prompt):].strip()
             
-            # 페이지당 아이템 개수 설정
-            if any(keyword in user_lower for keyword in ['페이지', '목록', '아이템', '개수', '보여', '표시']):
-                import re
-                numbers = re.findall(r'\d+', user_input)
-                if numbers:
-                    count = int(numbers[0])
-                    if 5 <= count <= 50:  # 유효한 범위
-                        return 'itemsPerPage', str(count)
+            print(f"[🤖 Qwen 응답] {qwen_response}")
             
-            # 발신자 이름 설정 - 더 정확한 패턴 매칭
-            sender_keywords = ['발신자', '발신장', '보낸사람', '보낸이', '발송자', '송신자', 'sender', '보내는사람', '보내는이']
-            name_keywords = ['이름', '명', '성명']
-            action_keywords = ['바꿔', '변경', '설정', '수정', '고쳐', '바꾸', '변경해', '설정해']
+            # "setting_type|setting_value" 형식 파싱
+            if '|' in qwen_response:
+                first_line = qwen_response.split('\n')[0].strip()
+                if '|' in first_line:
+                    parts = first_line.split('|', 1)
+                    setting_type = parts[0].strip()
+                    setting_value = parts[1].strip()
+                    
+                    print(f"[✅ 설정 추출 성공] {setting_type} = {setting_value}")
+                    return setting_type, setting_value
             
-            # 발신자 관련 키워드가 있는지 확인
-            has_sender = any(keyword in user_lower for keyword in sender_keywords)
-            has_name = any(keyword in user_lower for keyword in name_keywords)
-            has_action = any(keyword in user_lower for keyword in action_keywords)
-            
-            # 발신자 + 이름 조합 또는 발신자 + 액션 조합이면 발신자 이름 설정
-            if has_sender and (has_name or has_action):
-                print(f"[📧 발신자 이름 설정 감지] 입력: '{user_input}'")
-                return 'senderName_request', 'need_input'
-            
-            print(f"[❌ 설정 추출 실패] 인식할 수 없는 명령: '{user_input}'")
+            print(f"[❌ 설정 추출 실패] 파싱 불가")
             return None, None
             
         except Exception as e:
-            print(f"[❗ 키워드 설정 추출 오류] {str(e)}")
+            print(f"[❗ Qwen 설정 추출 오류] {str(e)}")
             return None, None
 
     def _handle_settings_control(self, user_input, user_email, details):
-        """설정 변경 처리 (키워드 기반)"""
+        """설정 변경 처리 (Qwen 기반)"""
         try:
             import requests
             
             print(f"[⚙️ 설정 변경] 사용자 입력: '{user_input}'")
             print(f"[📋 세부사항] {details}")
             
-            
-            # 1. 키워드로 설정값 추출
-            setting_type, setting_value = self._extract_settings_with_keywords(user_input)
+            # 1. Qwen으로 설정값 추출
+            setting_type, setting_value = self._extract_settings_with_qwen(user_input)
             
             if not setting_type or not setting_value:
                 return "❓ 설정 내용을 파악할 수 없습니다. 다시 말씀해주세요.\n\n예: '폰트 크기 18로', '다크모드로', 'Arial 폰트로'"
@@ -2458,25 +1719,21 @@ Reply:
             # 테마 설정
             if setting_type == "theme":
                 response = requests.put(
-                    f'http://localhost:5001/api/settings/GENERAL/THEME/appearance',
+                    f'http://localhost:5001/api/settings/GENERAL/THEME',
                     json={
                         'email': user_email,
-                        'value': setting_value
+                        'settings': {'appearance': setting_value}
                     }
                 )
                 
                 if response.status_code == 200:
-                    # 설정 변경 완료 시 이벤트 발생
-                    # 소켓 서버가 없으므로 이벤트 전송 불가
-                    print(f"[⚠️ 소켓 서버 없음] 실시간 업데이트 불가 - UI 새로고침 필요")
-                    
                     theme_names = {"dark": "다크 모드", "light": "라이트 모드", "auto": "자동 모드"}
                     return f"✅ 테마가 {theme_names.get(setting_value, setting_value)}로 변경되었습니다! 🎨"
                 else:
                     return "❌ 테마 변경에 실패했습니다."
             
             # 폰트 크기 설정
-            elif setting_type == "fontSize":
+            elif setting_type == "font_size":
                 # "18px" → 18 추출
                 import re
                 size_match = re.search(r'\d+', setting_value)
@@ -2484,23 +1741,13 @@ Reply:
                     size = int(size_match.group())
                     if 10 <= size <= 22:
                         response = requests.put(
-                            f'http://localhost:5001/api/settings/GENERAL/WRITE/fontSize',
+                            f'http://localhost:5001/api/settings/GENERAL/WRITE',
                             json={
                                 'email': user_email,
-                                'value': f'{size}px'
+                                'fontSize': f'{size}px'
                             }
                         )
                         if response.status_code == 200:
-                            # 설정 변경 완료 시 이벤트 발생
-                            try:
-                                import socketio
-                                sio = socketio.SimpleClient()
-                                sio.connect('http://localhost:5001')
-                                sio.emit('settingsUpdated', {'email': user_email})
-                                sio.disconnect()
-                            except Exception as e:
-                                print(f"[⚠️ 소켓 이벤트 전송 실패] {e}")
-                            
                             return f"✅ 폰트 크기가 {size}px로 설정되었습니다! 🔤"
                         else:
                             return "❌ 폰트 크기 변경에 실패했습니다."
@@ -2510,7 +1757,7 @@ Reply:
                     return "❌ 올바른 폰트 크기 형식이 아닙니다."
             
             # 폰트 종류 설정  
-            elif setting_type == "fontFamily":
+            elif setting_type == "font_family":
                 font_map = {
                     "Arial": "Arial",
                     "맑은고딕": "맑은 고딕", 
@@ -2528,43 +1775,29 @@ Reply:
                 
                 font_family = font_map.get(setting_value, setting_value)
                 response = requests.put(
-                    f'http://localhost:5001/api/settings/GENERAL/WRITE/fontFamily',
+                    f'http://localhost:5001/api/settings/GENERAL/WRITE',
                     json={
                         'email': user_email,
-                        'value': font_family
+                        'fontFamily': font_family
                     }
                 )
                 if response.status_code == 200:
-                    # 설정 변경 완료 시 이벤트 발생
-                    # 소켓 서버가 없으므로 이벤트 전송 불가
-                    print(f"[⚠️ 소켓 서버 없음] 실시간 업데이트 불가 - UI 새로고침 필요")
-                    
                     return f"✅ 폰트가 {font_family}로 변경되었습니다! 📝"
                 else:
                     return "❌ 폰트 변경에 실패했습니다."
             
             # Gmail 가져오기 개수
-            elif setting_type == "gmailFetchCount":
+            elif setting_type == "gmail_count":
                 count = int(setting_value)
                 if 3 <= count <= 100:
                     response = requests.put(
-                        f'http://localhost:5001/api/settings/GENERAL/READ/gmailFetchCount',
+                        f'http://localhost:5001/api/settings/GENERAL/READ',
                         json={
                             'email': user_email,
-                            'value': count
+                            'settings': {'maxMailsToFetch': count}
                         }
                     )
                     if response.status_code == 200:
-                        # 설정 변경 완료 시 이벤트 발생
-                        try:
-                            import socketio
-                            sio = socketio.SimpleClient()
-                            sio.connect('http://localhost:5001')
-                            sio.emit('settingsUpdated', {'email': user_email})
-                            sio.disconnect()
-                        except Exception as e:
-                            print(f"[⚠️ 소켓 이벤트 전송 실패] {e}")
-                        
                         return f"✅ Gmail 가져오기 개수가 {count}개로 설정되었습니다! 📧"
                     else:
                         return "❌ Gmail 개수 설정에 실패했습니다."
@@ -2572,115 +1805,36 @@ Reply:
                     return "⚠️ Gmail 개수는 3~100 사이여야 합니다."
             
             # 페이지당 표시 개수
-            elif setting_type == "itemsPerPage":
+            elif setting_type == "page_size":
                 size = int(setting_value)
                 if 3 <= size <= 50:
                     response = requests.put(
-                        f'http://localhost:5001/api/settings/GENERAL/READ/itemsPerPage',
+                        f'http://localhost:5001/api/settings/GENERAL/READ',
                         json={
                             'email': user_email,
-                            'value': size
+                            'settings': {'mailsPerPage': size}
                         }
                     )
                     if response.status_code == 200:
-                        # 설정 변경 완료 시 이벤트 발생
-                        try:
-                            import socketio
-                            sio = socketio.SimpleClient()
-                            sio.connect('http://localhost:5001')
-                            sio.emit('settingsUpdated', {'email': user_email})
-                            sio.disconnect()
-                        except Exception as e:
-                            print(f"[⚠️ 소켓 이벤트 전송 실패] {e}")
-                        
                         return f"✅ 페이지당 표시 개수가 {size}개로 설정되었습니다! 📄"
                     else:
                         return "❌ 페이지 설정에 실패했습니다."
                 else:
                     return "⚠️ 페이지당 개수는 3~50 사이여야 합니다."
             
-            # 발신자 이름 입력 요청
-            elif setting_type == "senderName_request":
-                # 임시 파일에 요청 상태 저장
-                try:
-                    import os
-                    temp_dir = "user_sessions"
-                    os.makedirs(temp_dir, exist_ok=True)
-                    temp_file = os.path.join(temp_dir, f"{user_email}_awaiting_name.txt")
-                    with open(temp_file, 'w', encoding='utf-8') as f:
-                        f.write("waiting")
-                    print(f"[💾 상태 저장] 발신자 이름 입력 대기 상태 저장")
-                except Exception as e:
-                    print(f"[⚠️ 상태 저장 실패] {e}")
-                
-                return """📧 **발신자 이름 설정**
-
-원하는 발신자 이름을 입력해주세요.
-예: 최수운, 김철수, John Smith"""
-
-            # 실제 발신자 이름 설정
-            elif setting_type == "senderName":
-                print(f"[🔧 API 호출] PUT /api/settings/GENERAL/WRITE/senderName")
-                print(f"[📤 요청 데이터] email: {user_email}, value: {setting_value}")
-                
+            # 보내는 이름 설정
+            elif setting_type == "sender_name":
                 response = requests.put(
-                    f'http://localhost:5001/api/settings/GENERAL/WRITE/senderName',
+                    f'http://localhost:5001/api/settings/GENERAL/WRITE',
                     json={
                         'email': user_email,
-                        'value': setting_value
+                        'settings': {'senderName': setting_value}
                     }
                 )
-                
-                print(f"[📥 응답 상태] {response.status_code}")
                 if response.status_code == 200:
-                    response_data = response.json()
-                    print(f"[📥 응답 데이터] {response_data}")
-                    # 소켓 서버가 없으므로 이벤트 전송 불가
-                    print(f"[⚠️ 소켓 서버 없음] Flask-SocketIO가 설정되지 않아 실시간 업데이트 불가")
-                    print(f"[💡 해결방법] 설정 UI 페이지를 새로고침하면 변경사항이 반영됩니다.")
-                    
-                    # DB 값 확인 (검증용)
-                    print(f"[🔍 DB 검증 시작] 설정이 실제로 저장되었는지 확인...")
-                    try:
-                        # 1초 대기 (DB 커밋 완료 대기)
-                        import time
-                        time.sleep(1)
-                        
-                        # 전체 WRITE 섹션 조회
-                        verify_response = requests.get(
-                            f'http://localhost:5001/api/settings/GENERAL/WRITE',
-                            params={'email': user_email}
-                        )
-                        print(f"[🔍 DB 검증] GET 응답 코드: {verify_response.status_code}")
-                        
-                        if verify_response.status_code == 200:
-                            verify_data = verify_response.json()
-                            print(f"[🔍 DB 검증] 전체 응답: {verify_data}")
-                            
-                            settings_data = verify_data.get('settings', {})
-                            actual_value = settings_data.get('senderName', 'N/A')
-                            
-                            print(f"[📊 DB 검증 결과]")
-                            print(f"  - 요청한 값: '{setting_value}'")
-                            print(f"  - 저장된 값: '{actual_value}'")
-                            print(f"  - 전체 WRITE 설정: {settings_data}")
-                            
-                            if actual_value != setting_value:
-                                print(f"[❌ DB 오류] 설정값 불일치! DB에 제대로 저장되지 않았습니다.")
-                                print(f"[💡 원인] DB 커밋 실패 또는 세션 불일치 가능성")
-                            else:
-                                print(f"[✅ DB 성공] 설정값이 정상적으로 저장되었습니다!")
-                                print(f"[💡 UI 문제] DB는 정상이므로 UI 새로고침이 필요합니다.")
-                        else:
-                            print(f"[❌ DB 검증 실패] API 응답 오류: {verify_response.text}")
-                    except Exception as e:
-                        print(f"[❌ DB 검증 실패] 예외 발생: {e}")
-                    
                     return f"✅ 보내는 이름이 '{setting_value}'로 설정되었습니다! 👤"
                 else:
-                    response_data = response.json() if response.content else {}
-                    error_msg = response_data.get('message', '알 수 없는 오류')
-                    return f"❌ 보내는 이름 설정에 실패했습니다. 오류: {error_msg}"
+                    return "❌ 보내는 이름 설정에 실패했습니다."
                     
             else:
                 return f"❓ 지원하지 않는 설정 타입입니다: {setting_type}"
@@ -2688,6 +1842,279 @@ Reply:
         except Exception as e:
             print(f"[❗설정 변경 오류] {str(e)}")
             return f"❌ 설정 변경 중 오류가 발생했습니다: {str(e)}"
+                    theme_name = "라이트 모드"
+                elif "자동" in user_input_lower or "auto" in user_input_lower:
+                    theme_value = "auto"
+                    theme_name = "자동 모드"
+                else:
+                    theme_value = "dark"  # 기본값
+                    theme_name = "다크 모드"
+                
+                # API 호출
+                response = requests.put(
+                    f'http://localhost:5001/api/settings/GENERAL/THEME',
+                    json={
+                        'email': user_email,
+                        'settings': {'appearance': theme_value}
+                    }
+                )
+                
+                if response.status_code == 200:
+                    return f"✅ 테마가 {theme_name}로 변경되었습니다! 🎨"
+                else:
+                    return "❌ 테마 변경에 실패했습니다."
+            
+            # 2. Gmail 가져오기 개수
+            elif any(keyword in user_input_lower for keyword in ["gmail", "메일", "가져오기", "개수"]) and re.search(r'\d+', user_input):
+                numbers = re.findall(r'\d+', user_input)
+                if numbers:
+                    count = int(numbers[0])
+                    if 3 <= count <= 100:
+                        response = requests.put(
+                            f'http://localhost:5001/api/settings/GENERAL/READ',
+                            json={
+                                'email': user_email,
+                                'settings': {'gmailFetchCount': count}
+                            }
+                        )
+                        if response.status_code == 200:
+                            return f"✅ Gmail 가져오기 개수가 {count}개로 설정되었습니다! 📧"
+                        else:
+                            return "❌ 설정 변경에 실패했습니다."
+                    else:
+                        return "⚠️ Gmail 가져오기 개수는 3~100 사이여야 합니다."
+            
+            # 3. 페이지당 표시 개수
+            elif any(keyword in user_input_lower for keyword in ["페이지", "표시"]) and re.search(r'\d+', user_input):
+                numbers = re.findall(r'\d+', user_input)
+                if numbers:
+                    count = int(numbers[0])
+                    if 3 <= count <= 50:
+                        response = requests.put(
+                            f'http://localhost:5001/api/settings/GENERAL/READ',
+                            json={
+                                'email': user_email,
+                                'settings': {'itemsPerPage': count}
+                            }
+                        )
+                        if response.status_code == 200:
+                            return f"✅ 페이지당 {count}개씩 표시하도록 설정되었습니다! 📄"
+                        else:
+                            return "❌ 설정 변경에 실패했습니다."
+                    else:
+                        return "⚠️ 페이지당 표시 개수는 3~50 사이여야 합니다."
+            
+            # 4. 폰트 크기 (숫자가 있으면 크기 변경으로 우선 처리)
+            elif "폰트" in user_input_lower and re.search(r'\d+', user_input):
+                numbers = re.findall(r'\d+', user_input)
+                if numbers:
+                    size = int(numbers[0])
+                    if 10 <= size <= 22:
+                        response = requests.put(
+                            f'http://localhost:5001/api/settings/GENERAL/WRITE',
+                            json={
+                                'email': user_email,
+                                'fontSize': f'{size}px'
+                            }
+                        )
+                        if response.status_code == 200:
+                            return f"✅ 폰트 크기가 {size}px로 설정되었습니다! 🔤"
+                        else:
+                            return "❌ 설정 변경에 실패했습니다."
+                    else:
+                        return "⚠️ 폰트 크기는 10~22 사이여야 합니다."
+            
+            # 5. 폰트 종류 (숫자가 없고 폰트 키워드가 있을 때만)
+            elif "폰트" in user_input_lower and not re.search(r'\d+', user_input):
+                if "arial" in user_input_lower:
+                    font = "Arial, sans-serif"
+                    font_name = "Arial"
+                elif "맑은" in user_input_lower or "고딕" in user_input_lower:
+                    font = "'Malgun Gothic', sans-serif"
+                    font_name = "맑은 고딕"
+                elif "나눔" in user_input_lower:
+                    font = "'Nanum Gothic', sans-serif"
+                    font_name = "나눔고딕"
+                else:
+                    font = "system-ui"
+                    font_name = "시스템 기본"
+                
+                response = requests.put(
+                    f'http://localhost:5001/api/settings/GENERAL/WRITE',
+                    json={
+                        'email': user_email,
+                        'settings': {'fontFamily': font}
+                    }
+                )
+                if response.status_code == 200:
+                    return f"✅ 폰트가 {font_name}으로 변경되었습니다! ✍️"
+                else:
+                    return "❌ 설정 변경에 실패했습니다."
+            
+            # 6. 보내는 이름
+            elif any(keyword in user_input_lower for keyword in ["보내는", "발신자", "이름"]):
+                # "보내는 이름 홍길동으로" 같은 패턴에서 이름 추출
+                import re
+                match = re.search(r'이름\s*([가-힣a-zA-Z\s]+)(?:으로|로)', user_input)
+                if match:
+                    sender_name = match.group(1).strip()
+                    response = requests.put(
+                        f'http://localhost:5001/api/settings/GENERAL/WRITE',
+                        json={
+                            'email': user_email,
+                            'settings': {'senderName': sender_name}
+                        }
+                    )
+                    if response.status_code == 200:
+                        return f"✅ 보내는 이름이 '{sender_name}'으로 설정되었습니다! 👤"
+                    else:
+                        return "❌ 설정 변경에 실패했습니다."
+                else:
+                    return "⚠️ 설정할 이름을 입력해주세요. 예: '보내는 이름 홍길동으로 설정'"
+            
+            # 7. 서명 관리
+            elif "서명" in user_input_lower:
+                return self._handle_signature_management(user_input, user_email)
+            
+            else:
+                return "❓ 어떤 설정을 변경하시겠습니까?\n\n사용 가능한 설정:\n• 테마 (다크모드/라이트모드)\n• Gmail 개수 (3~100개)\n• 페이지당 표시 개수 (3~50개)\n• 폰트 크기 (10~22px)\n• 폰트 종류\n• 보내는 이름\n• 서명 관리 (추가/수정/삭제/조회/토글)"
+                
+        except Exception as e:
+            print(f"[❗설정 변경 오류] {str(e)}")
+            return f"❌ 설정 변경 중 오류가 발생했습니다: {str(e)}"
+    
+    def _handle_signature_management(self, user_input, user_email):
+        """서명 관리 처리"""
+        try:
+            import requests
+            import re
+            
+            print(f"[📝 서명 관리] 사용자 입력: '{user_input}'")
+            user_input_lower = user_input.lower()
+            
+            # 1. 서명 추가
+            if "추가" in user_input_lower:
+                # "서명 추가 홍길동\n마케팅팀\n010-1234-5678" 패턴 처리
+                match = re.search(r'서명\s*추가\s*(.*)', user_input, re.DOTALL)
+                if match:
+                    content = match.group(1).strip()
+                    if content:
+                        # \n을 실제 개행으로 변환
+                        content = content.replace('\\n', '\n')
+                        
+                        # 서명 추가 - 직접 서비스 호출
+                        from services.signature_service import SignatureService
+                        result = SignatureService.add_signature(
+                            user_email=user_email,
+                            name='내 서명',
+                            content=content,
+                            html_content='',
+                            is_html=False
+                        )
+                        
+                        if result['success']:
+                            return f"✅ 서명이 추가되었습니다!\n\n📝 내용:\n{content}"
+                        else:
+                            return f"❌ 서명 추가 실패: {result.get('error', '알 수 없는 오류')}"
+                    else:
+                        return "⚠️ 서명 내용을 입력해주세요.\n예: '서명 추가 홍길동\\n마케팅팀\\n010-1234-5678'"
+                else:
+                    return "⚠️ 서명 내용을 입력해주세요.\n예: '서명 추가 홍길동\\n마케팅팀\\n010-1234-5678'"
+            
+            # 2. 서명 수정
+            elif "수정" in user_input_lower or "변경" in user_input_lower:
+                # "서명 수정 김철수\n영업팀\n010-9876-5432" 패턴 처리
+                match = re.search(r'서명\s*(?:수정|변경)\s*(.*)', user_input, re.DOTALL)
+                if match:
+                    content = match.group(1).strip()
+                    if content:
+                        content = content.replace('\\n', '\n')
+                        
+                        # 첫 번째 서명 수정 - 직접 서비스 호출
+                        from services.signature_service import SignatureService
+                        result = SignatureService.update_signature(
+                            user_email=user_email,
+                            signature_id=1,
+                            name='내 서명',
+                            content=content,
+                            html_content='',
+                            is_html=False
+                        )
+                        
+                        if result['success']:
+                            return f"✅ 서명이 수정되었습니다!\n\n📝 새 내용:\n{content}"
+                        else:
+                            return f"❌ 서명 수정 실패: {result.get('error', '알 수 없는 오류')}"
+                    else:
+                        return "⚠️ 새 서명 내용을 입력해주세요.\n예: '서명 수정 김철수\\n영업팀\\n010-9876-5432'"
+                else:
+                    return "⚠️ 새 서명 내용을 입력해주세요.\n예: '서명 수정 김철수\\n영업팀\\n010-9876-5432'"
+            
+            # 3. 서명 삭제
+            elif "삭제" in user_input_lower:
+                from services.signature_service import SignatureService
+                result = SignatureService.delete_signature(user_email, 1)
+                
+                if result['success']:
+                    return "✅ 서명이 삭제되었습니다."
+                else:
+                    return f"❌ 서명 삭제 실패: {result.get('error', '알 수 없는 오류')}"
+            
+            # 4. 서명 조회/보기
+            elif any(word in user_input_lower for word in ["보여", "조회", "확인", "내용"]):
+                from services.signature_service import SignatureService
+                result = SignatureService.get_signatures(user_email)
+                
+                if result['success'] and result['signatures']:
+                    signature = result['signatures'][0]  # 첫 번째 서명
+                    content = signature.get('content', '내용 없음')
+                    return f"📝 현재 서명:\n\n{content}"
+                else:
+                    return "📝 등록된 서명이 없습니다."
+            
+            # 5. 서명 켜기/끄기
+            elif "켜" in user_input_lower or "활성" in user_input_lower or "사용" in user_input_lower:
+                from services.signature_service import SignatureService
+                result = SignatureService.set_signature_status(user_email, enabled=True)
+                
+                if result['success']:
+                    return "✅ 서명 사용이 활성화되었습니다! 🟢"
+                else:
+                    return f"❌ 서명 활성화 실패: {result.get('error', '알 수 없는 오류')}"
+            
+            elif "끄" in user_input_lower or "비활성" in user_input_lower or "사용안함" in user_input_lower:
+                from services.signature_service import SignatureService
+                result = SignatureService.set_signature_status(user_email, enabled=False)
+                
+                if result['success']:
+                    return "✅ 서명 사용이 비활성화되었습니다! 🔴"
+                else:
+                    return f"❌ 서명 비활성화 실패: {result.get('error', '알 수 없는 오류')}"
+            
+            # 6. 서명 도움말
+            else:
+                return """📝 **서명 관리 명령어**
+
+🔹 **서명 추가**
+• "서명 추가 홍길동\\n마케팅팀\\n010-1234-5678"
+
+🔹 **서명 수정**  
+• "서명 수정 김철수\\n영업팀\\n010-9876-5432"
+
+🔹 **서명 삭제**
+• "서명 삭제"
+
+🔹 **서명 조회**
+• "서명 보여줘" / "서명 내용 확인"
+
+🔹 **서명 토글**
+• "서명 켜기" / "서명 끄기"
+
+💡 **팁**: \\n을 사용하면 줄바꿈됩니다!"""
+                
+        except Exception as e:
+            print(f"[❗서명 관리 오류] {str(e)}")
+            return f"❌ 서명 관리 중 오류가 발생했습니다: {str(e)}"
     
     def _parse_mail_type_keywords(self, user_input):
         """사용자 입력에서 메일 타입 키워드 파싱"""
@@ -2738,9 +2165,9 @@ Reply:
             # 각 학습된 명령어와 유사도 비교
             for i, learned in enumerate(learned_commands, 1):
                 similarity = self._calculate_similarity_enhanced(user_input_lower, learned.command.lower())
-                print(f"[📏 유사도 #{i}] '{learned.command}' vs '{user_input}' = {similarity:.3f} ({'✅ 임계값 통과' if similarity > 0.75 else '❌ 임계값 미달'})")
+                print(f"[📏 유사도 #{i}] '{learned.command}' vs '{user_input}' = {similarity:.3f} ({'✅ 임계값 통과' if similarity > 0.9 else '❌ 임계값 미달'})")
                 
-                if similarity > best_similarity and similarity > 0.75:  # 75% 이상
+                if similarity > best_similarity and similarity > 0.9:  # 90% 이상
                     best_match = learned
                     best_similarity = similarity
             
@@ -2754,11 +2181,11 @@ Reply:
                 from models.db import db
                 db.session.commit()
                 
-                # 학습된 intent로 실행 (원본 입력 포함)
+                # 학습된 intent로 실행
                 print(f"[🚀 학습 패턴 실행] intent='{best_match.intent}', keywords={best_match.get_keywords_dict()}")
-                return self._execute_learned_intent(best_match.intent, best_match.get_keywords_dict(), user_email, app_password, original_input=user_input)
+                return self._execute_learned_intent(best_match.intent, best_match.get_keywords_dict(), user_email, app_password)
             else:
-                print(f"[❌ 매칭 실패] 유사도 75% 이상인 학습 데이터 없음 (최고: {best_similarity:.3f})")
+                print(f"[❌ 매칭 실패] 유사도 90% 이상인 학습 데이터 없음 (최고: {best_similarity:.3f})")
                 
         except Exception as e:
             print(f"[❗ 학습 패턴 매칭 오류] {str(e)}")
@@ -2784,7 +2211,7 @@ Reply:
             "과제", "회의", "공지", "영수증", "비밀번호", "로그인", "알림", "메일", "이메일",
             # settings (새로 추가)
             "폰트", "글꼴", "크기", "설정", "바꿔", "바꿔줘", "변경", "수정", "조절", "적용",
-            "테마", "다크모드", "라이트모드", "Gmail", "개수", "페이지"
+            "테마", "다크모드", "라이트모드", "서명", "Gmail", "개수", "페이지"
         ]
         
         common_keywords = 0
@@ -2821,12 +2248,11 @@ Reply:
         
         return len(intersection) / len(union) if union else 0.0
     
-    def _execute_learned_intent(self, intent, keywords, user_email, app_password, original_input=None):
+    def _execute_learned_intent(self, intent, keywords, user_email, app_password):
         """학습된 intent 실행"""
         
         print(f"[🎯 학습된 Intent 실행 시작] intent='{intent}'")
         print(f"[🏷️ 사용 키워드] {keywords}")
-        print(f"[📝 원본 입력] '{original_input}'")
         
         # 기존 핸들러들을 그대로 활용
         if intent == "person_search":
@@ -2876,13 +2302,19 @@ Reply:
                 response = self._handle_email_statistics("전체 통계", user_email, app_password)
             
         elif intent == "settings_control":
-            print(f"[⚙️ 설정 변경 실행] 원본 명령어 사용")
-            # 원본 입력을 그대로 사용 (재구성 하지 않음)
-            if original_input:
-                response = self._handle_settings_control(original_input, user_email, "")
+            print(f"[⚙️ 설정 변경 실행] 키워드 기반 설정 추출 중...")
+            # 설정 관련 키워드 추출
+            setting_keyword = keywords.get('setting', '') or keywords.get('action', '')
+            print(f"[🎯 설정 키워드] '{setting_keyword}'")
+            
+            # 명령어 재구성
+            if setting_keyword:
+                user_input_reconstructed = f"{setting_keyword} 설정"
             else:
-                # 원본이 없으면 기본 메시지
-                response = "설정 변경 명령을 다시 입력해주세요."
+                user_input_reconstructed = "설정 변경"
+            
+            print(f"[🔄 명령어 재구성] '{user_input_reconstructed}'")
+            response = self._handle_settings_control(user_input_reconstructed, user_email, "")
             
         else:
             print(f"[❌ 알 수 없는 Intent] '{intent}' 처리 불가")
@@ -3001,7 +2433,7 @@ Reply:
             'attachment': ['첨부파일', '이미지', 'pdf', '문서', '파일', '사진', '동영상'],
             'action': ['검색', '보여줘', '찾아줘', '작성', '답장', '삭제', '요약', '써줘', '몇개', '개수', '통계', '개만', '개까지', '설정', '변경', '바꿔'],
             'content': ['과제', '회의', '공지', '영수증', '비밀번호', '로그인', '알림', '메일', '이메일', '프로젝트', '보고서'],
-            'setting': ['다크모드', '라이트모드', '테마', '폰트', '크기', 'gmail', '페이지', '표시', '보내는', '이름']
+            'setting': ['다크모드', '라이트모드', '테마', '폰트', '크기', 'gmail', '페이지', '표시', '보내는', '이름', '서명']
         }
         
         for keyword_type, keyword_list in keyword_types.items():

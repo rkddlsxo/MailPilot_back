@@ -14,10 +14,10 @@ class Config:
     
     # AI 모델 설정
     YOLO_MODEL = 'yolov8n.pt'
-    QWEN_MODEL = "Qwen/Qwen1.5-1.8B-Chat"
+    QWEN_MODEL = "Qwen/Qwen2-1.5B-Instruct"
     
     # API 토큰 (환경변수에서 가져오기)
-    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', 'your-nk-token-here')  # 실제 토큰으로 교체
+    NOMIC_TOKEN = os.getenv('NOMIC_TOKEN', '--')  # 실제 토큰으로 교체
     
     # 이메일 설정
     GMAIL_IMAP_SERVER = "imap.gmail.com"
@@ -49,7 +49,7 @@ class Config:
         """토큰 유효성 검사"""
         issues = []
         
-        if cls.NOMIC_TOKEN == 'your-nk-token-here':
+        if cls.NOMIC_TOKEN == 'your-token-here':
             issues.append("NOMIC_TOKEN이 설정되지 않았습니다.")
 
         if cls.HF_TOKEN == 'your-hf-token-here':

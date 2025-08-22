@@ -151,7 +151,10 @@ class EmailService:
             subject = self._decode_header(msg.get("Subject", ""))
             
             # 발신자 정보
-            name, addr = parseaddr(msg.get("From"))
+            # From 헤더 디코딩 추가
+            raw_from = msg.get("From", "")
+            decoded_from = self._decode_header(raw_from)
+            name, addr = parseaddr(decoded_from)
             from_field = f"{name} <{addr}>" if name else addr
             
             # 날짜 처리
