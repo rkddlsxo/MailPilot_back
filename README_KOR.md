@@ -44,6 +44,50 @@ React, Flask 프레임워크를 기반으로 Tauri를 활용하여 개발한 데
 - **Transformers**: Hugging Face 모델 -> 퀄컴 ai 허브를 활용하여, 로컬 pc의 모델로 수정 예정
 - **AI Model**: Nomic, QWEN LLM, EASY_OCR 모델 사용 중
 
+---
+
+## MySQL 데이터베이스 설정
+
+
+
+이 프로젝트는 MySQL 데이터베이스를 사용합니다. 프로젝트를 실행하기 전에 mailpilot이라는 이름의 데이터베이스를 생성하고, 데이터베이스 연결 정보를 config.py 파일에 설정해야 합니다.
+
+
+
+### 1. MySQL 데이터베이스 생성
+
+MySQL 클라이언트(예: MySQL Workbench, 터미널)를 사용하여 mailpilot 데이터베이스를 생성합니다.
+
+
+
+### 2. 데이터베이스 연결 정보 설정
+
+프로젝트 루트 디렉토리 config.py 파일에 MySQL 연결정보를 입력합니다.
+
+
+
+SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:@localhost/mailpilot'
+
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+
+
+위 설정은 root 사용자로 비밀번호 없이 localhost의 mailpilot 데이터베이스에 연결하는 것을 가정합니다. 만약 다른 사용자 이름이나 비밀번호를 사용한다면, 아래 형식에 맞게 수정해주세요.
+
+
+
+SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://your_username:your_password@localhost/mailpilot'
+
+
+
+### 3. 서버 실행
+
+MySQL 설정이 완료되면 백엔드 서버 설치 및 실행 방법에 따라 백엔드 서버를 실행해주세요.
+
+서버 실행 시 Flask-SQLAlchemy 설정에 따라 필요한 데이터베이스 테이블이 자동으로 생성됩니다.
+
+---
+
 ## 응용 프로그램 설치 및 실행 방법
 
 ### 1. 프로젝트 클론

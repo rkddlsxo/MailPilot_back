@@ -47,6 +47,32 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 - **Transformers**: Hugging Face models -> will be modified to local PC models using Qualcomm AI Hub
 - **AI Models**: Nomic, QWEN LLM, EASY_OCR models
 
+---
+
+## MySQL Database Setup
+This project uses a MySQL database. Before running the project, you must create a database named mailpilot and configure the database connection information in the config.py file.
+
+### 1. Create MySQL Database
+Use a MySQL client (e.g., MySQL Workbench, terminal) to create the mailpilot database.
+
+CREATE DATABASE mailpilot;
+
+### 2. Configure Database Connection
+In the project's root directory, create a config.py file and enter the MySQL connection information as shown below.
+
+SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:@localhost/mailpilot'
+SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+The configuration above assumes a connection to the mailpilot database on localhost with the root user and no password. If you are using a different username or password, please modify the format below accordingly.
+
+SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://your_username:your_password@localhost/mailpilot'
+
+### 3. Run the Server
+Once the MySQL setup is complete, please follow the backend server installation and execution instructions to run the backend server.
+The required database tables will be created automatically upon server startup, based on the Flask-SQLAlchemy configuration.
+
+---
+
 ## Application Installation and Execution Guide
 
 ### 1. Clone Project
