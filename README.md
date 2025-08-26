@@ -28,6 +28,19 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 
 ---
 
+### AI Feature-to-Model Mapping
+| Feature                                  | Model Used                           | Description |
+| ---------------------------------------- | ------------------------------------ | ----------- |
+| Email auto-classification (spam/important/sent/to-me/filtering) |                                    | Classifies emails by vectorizing content and metadata |
+| Email summarization                      |                                      | Generates concise summaries of email content for quick preview |
+| Sender-based search                      |                                      | Filters and searches emails by sender using text embeddings |
+| To-do (task) extraction                  |                                      | Extracts and organizes schedules or tasks from email content |
+| Attachment summarization                 |                                      | Extracts text from images/documents and summarizes the content |
+| AI auto-reply generation                 |                                      | Generates context-aware replies to received emails |
+| Conversational interface (correction/search/calendar integration, etc.) |      | Provides natural language interaction for various email management tasks |
+
+---
+
 ## Team Members
 
 | Name | Email | Qualcomm ID |
