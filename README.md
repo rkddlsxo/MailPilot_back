@@ -20,11 +20,22 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 | ------- | ----------- |
 | Spam/Important/Sent/Self-sent/Filtered | Automatically classify and view emails by tabs |
 | Email Summary View | Preview email content summaries in the list view |
-| Sender Search Function | Filter emails by sender |
 | To-Do (Task Management) Display | Automatically organize and provide user's key schedules |
 | Attachment Summary Function | Automatically summarize attached images and document content |
 | AI Auto-Reply Generation | Generate automatic replies for received emails |
 | Conversational Interface | Grammar correction, calendar content addition, search functions, and other email management features |
+
+---
+
+### AI Feature-to-Model Mapping
+| Feature                                  | Model Used                           | Description |
+| ---------------------------------------- | ------------------------------------ | ----------- |
+| Email auto-classification (spam/important/sent/to-me/filtering) | Nomic-text                                   | Classifies emails by vectorizing content and metadata |
+| Email summarization                      |Qwen2.5-7B-Instruct                                     | Generates concise summaries of email content for quick preview |
+| To-do (task) extraction                  |  Qwen2.5-7B-Instruct                                     | Extracts and organizes schedules or tasks from email content |
+| Attachment summarization                 |    EasyOCR / Yolo11V / Qwen2.5-7B-Instruct                              | Extracts text from images/documents and summarizes the content |
+| AI auto-reply generation                 |       Qwen2.5-7B-Instruct                                  | Generates context-aware replies to received emails |
+| Conversational interface (correction/search/calendar integration, etc.) |  Qwen2.5-7B-Instruct/Nomic-text    | Provides natural language interaction for various email management tasks |
 
 ---
 
@@ -46,32 +57,6 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 - **Flask**: Backend server
 - **Transformers**: Hugging Face models -> will be modified to local PC models using Qualcomm AI Hub
 - **AI Models**: Nomic, QWEN LLM, EASY_OCR models
-
----
-
-## MySQL Database Setup
-This project uses a MySQL database. Before running the project, you must create a database named mailpilot and configure the database connection information in the config.py file.
-
-### 1. Create MySQL Database
-Use a MySQL client (e.g., MySQL Workbench, terminal) to create the mailpilot database.
-
-CREATE DATABASE mailpilot;
-
-### 2. Configure Database Connection
-In the project's root directory, create a config.py file and enter the MySQL connection information as shown below.
-
-SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://root:@localhost/mailpilot'
-SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-The configuration above assumes a connection to the mailpilot database on localhost with the root user and no password. If you are using a different username or password, please modify the format below accordingly.
-
-SQLALCHEMY_DATABASE_URI = 'mysql+mysqlconnector://your_username:your_password@localhost/mailpilot'
-
-### 3. Run the Server
-Once the MySQL setup is complete, please follow the backend server installation and execution instructions to run the backend server.
-The required database tables will be created automatically upon server startup, based on the Flask-SQLAlchemy configuration.
-
----
 
 ## Application Installation and Execution Guide
 
