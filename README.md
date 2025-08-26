@@ -20,7 +20,6 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 | ------- | ----------- |
 | Spam/Important/Sent/Self-sent/Filtered | Automatically classify and view emails by tabs |
 | Email Summary View | Preview email content summaries in the list view |
-| Sender Search Function | Filter emails by sender |
 | To-Do (Task Management) Display | Automatically organize and provide user's key schedules |
 | Attachment Summary Function | Automatically summarize attached images and document content |
 | AI Auto-Reply Generation | Generate automatic replies for received emails |
@@ -31,13 +30,12 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 ### AI Feature-to-Model Mapping
 | Feature                                  | Model Used                           | Description |
 | ---------------------------------------- | ------------------------------------ | ----------- |
-| Email auto-classification (spam/important/sent/to-me/filtering) |                                    | Classifies emails by vectorizing content and metadata |
-| Email summarization                      |                                      | Generates concise summaries of email content for quick preview |
-| Sender-based search                      |                                      | Filters and searches emails by sender using text embeddings |
-| To-do (task) extraction                  |                                      | Extracts and organizes schedules or tasks from email content |
-| Attachment summarization                 |                                      | Extracts text from images/documents and summarizes the content |
-| AI auto-reply generation                 |                                      | Generates context-aware replies to received emails |
-| Conversational interface (correction/search/calendar integration, etc.) |      | Provides natural language interaction for various email management tasks |
+| Email auto-classification (spam/important/sent/to-me/filtering) | Nomic-text                                   | Classifies emails by vectorizing content and metadata |
+| Email summarization                      |Qwen2.5-7B-Instruct                                     | Generates concise summaries of email content for quick preview |
+| To-do (task) extraction                  |  Qwen2.5-7B-Instruct                                     | Extracts and organizes schedules or tasks from email content |
+| Attachment summarization                 |    EasyOCR / Yolo11V / Qwen2.5-7B-Instruct                              | Extracts text from images/documents and summarizes the content |
+| AI auto-reply generation                 |       Qwen2.5-7B-Instruct                                  | Generates context-aware replies to received emails |
+| Conversational interface (correction/search/calendar integration, etc.) |  Qwen2.5-7B-Instruct/Nomic-text    | Provides natural language interaction for various email management tasks |
 
 ---
 
