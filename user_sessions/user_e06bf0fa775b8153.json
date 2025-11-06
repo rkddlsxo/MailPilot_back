@@ -1,0 +1,412 @@
+{
+  "user_email": "jinsung030405@gmail.com",
+  "extracted_todos": [
+    {
+      "id": 1754040776485,
+      "type": "event",
+      "title": "com>님이  \r\n’came-gpu02’ 캘린더에 대한 일정을 변경할 수 있습니다 권한으로 나를  \r\n초대했...",
+      "description": "=?UTF-8?B?6rmA7ZiE7Jqw?= <lionkim2006@gmail.com>님이 알린 일정",
+      "date": "2024-12-29",
+      "time": "18:00",
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?6rmA7ZiE7Jqw?= <lionkim2006@gmail.com>",
+        "subject": "공유 캘린더 ’came-gpu02’에 참여하려면 초대를 수락하세요",
+        "date": "2025-07-29 08:26:43",
+        "type": "event_notification",
+        "id": 666
+      }
+    },
+    {
+      "id": 1754040777084,
+      "type": "event",
+      "title": "com>님이  \r\n’came-gpu02’ 캘린더에 대한 일정을 변경할 수 있습니다 권한으로 나를  \r\n초대했...",
+      "description": "=?UTF-8?B?6rmA7ZiE7Jqw?= <lionkim2006@gmail.com>님이 알린 일정",
+      "date": "2024-12-29",
+      "time": "18:00",
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?6rmA7ZiE7Jqw?= <lionkim2006@gmail.com>",
+        "subject": "공유 캘린더 ’came-gpu02’에 참여하려면 초대를 수락하세요",
+        "date": "2025-07-29 08:26:43",
+        "type": "event_notification",
+        "id": 666
+      }
+    },
+    {
+      "id": 1754040776153,
+      "type": "meeting",
+      "title": "<향후일정>\r\n\r\n- 본선진출자 사전교육\r\n  - 일시: 8월 11일 (월요일) 오후 1:30 - 5:00\r...",
+      "description": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>님과의 컨퍼런스",
+      "date": "2025-08-11",
+      "time": "1:30",
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+        "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+        "date": "2025-08-01 08:29:33",
+        "type": "meeting_invitation",
+        "id": 668
+      }
+    },
+    {
+      "id": 1754040776253,
+      "type": "deadline",
+      "title": "*   서명 후, 이메일로 회신하여 제출하시거나 8월 11일 마이크로소프트 행사에 2 부를 인쇄하여 제출해주...",
+      "description": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>님이 요청한 마감 업무",
+      "date": "2025-08-11",
+      "time": null,
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+        "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+        "date": "2025-08-01 08:29:33",
+        "type": "deadline_notice",
+        "id": 668
+      }
+    },
+    {
+      "id": 1754040776279,
+      "type": "deadline",
+      "title": "예선 제출물 준비에 애써주신 점 진심으로 감사드립니다",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 요청한 마감 업무",
+      "date": "2025-08-11",
+      "time": null,
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "deadline_notice",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040776479,
+      "type": "event",
+      "title": "<향후 일정 안내>\r\n\r\n   - 8월 11일 오후에 한국 마이크로소프트 사무실에서 사전 교육이 진행됩니다",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 알린 일정",
+      "date": "2025-08-11",
+      "time": "3:39",
+      "priority": "medium",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "event_notification",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040776767,
+      "type": "meeting",
+      "title": "<향후일정>\r\n\r\n- 본선진출자 사전교육\r\n  - 일시: 8월 11일 (월요일) 오후 1:30 - 5:00\r...",
+      "description": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>님과의 컨퍼런스",
+      "date": "2025-08-11",
+      "time": "1:30",
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+        "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+        "date": "2025-08-01 08:29:33",
+        "type": "meeting_invitation",
+        "id": 668
+      }
+    },
+    {
+      "id": 1754040776867,
+      "type": "deadline",
+      "title": "*   서명 후, 이메일로 회신하여 제출하시거나 8월 11일 마이크로소프트 행사에 2 부를 인쇄하여 제출해주...",
+      "description": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>님이 요청한 마감 업무",
+      "date": "2025-08-11",
+      "time": null,
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+        "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+        "date": "2025-08-01 08:29:33",
+        "type": "deadline_notice",
+        "id": 668
+      }
+    },
+    {
+      "id": 1754040776877,
+      "type": "deadline",
+      "title": "예선 제출물 준비에 애써주신 점 진심으로 감사드립니다",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 요청한 마감 업무",
+      "date": "2025-08-11",
+      "time": null,
+      "priority": "high",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "deadline_notice",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040777077,
+      "type": "event",
+      "title": "<향후 일정 안내>\r\n\r\n   - 8월 11일 오후에 한국 마이크로소프트 사무실에서 사전 교육이 진행됩니다",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 알린 일정",
+      "date": "2025-08-11",
+      "time": "3:39",
+      "priority": "medium",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "event_notification",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040776353,
+      "type": "task",
+      "title": "*   이름과 주소가 맞는지 확인하시고, 수정이 필요한 경우 회신",
+      "description": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+        "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+        "date": "2025-08-01 08:29:33",
+        "type": "task_request",
+        "id": 668
+      }
+    },
+    {
+      "id": 1754040776379,
+      "type": "task",
+      "title": "투어도 예정이 되어있으니 전원 참석을",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "task_request",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040776380,
+      "type": "task",
+      "title": "본선 진출자 전원이 참여하는 오픈채팅방 개설도 검토중인데, 이 부분도 괜찮으실지 의견",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "task_request",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040776410,
+      "type": "task",
+      "title": "The team and I have made significant progress, and I’m",
+      "description": "=?utf-8?B?6rmA7KeE7ISx?= <optimist1782@naver.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?utf-8?B?6rmA7KeE7ISx?= <optimist1782@naver.com>",
+        "subject": "This is test mail!!",
+        "date": "2025-07-27 14:40:46",
+        "type": "task_request",
+        "id": 664
+      }
+    },
+    {
+      "id": 1754040776967,
+      "type": "task",
+      "title": "*   이름과 주소가 맞는지 확인하시고, 수정이 필요한 경우 회신",
+      "description": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+        "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+        "date": "2025-08-01 08:29:33",
+        "type": "task_request",
+        "id": 668
+      }
+    },
+    {
+      "id": 1754040776977,
+      "type": "task",
+      "title": "투어도 예정이 되어있으니 전원 참석을",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "task_request",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040776978,
+      "type": "task",
+      "title": "본선 진출자 전원이 참여하는 오픈채팅방 개설도 검토중인데, 이 부분도 괜찮으실지 의견",
+      "description": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+        "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+        "date": "2025-07-30 15:59:51",
+        "type": "task_request",
+        "id": 667
+      }
+    },
+    {
+      "id": 1754040777004,
+      "type": "task",
+      "title": "The team and I have made significant progress, and I’m",
+      "description": "=?utf-8?B?6rmA7KeE7ISx?= <optimist1782@naver.com>님이 요청한 업무",
+      "date": null,
+      "time": null,
+      "priority": "low",
+      "status": "pending",
+      "editable_date": true,
+      "source_email": {
+        "from": "=?utf-8?B?6rmA7KeE7ISx?= <optimist1782@naver.com>",
+        "subject": "This is test mail!!",
+        "date": "2025-07-27 14:40:46",
+        "type": "task_request",
+        "id": 664
+      }
+    }
+  ],
+  "last_emails": [
+    {
+      "id": 668,
+      "subject": "Edge AI 개발자 해커톤 본선진출 축하드립니다.",
+      "from": "hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>",
+      "date": "2025-08-01 08:29:33",
+      "body": "진성님,\r\n\r\n안녕하세요!\r\n\r\n먼저, 퀄컴 EdgeAI 개발자 해커톤 본선 진출을 진심으로 축하드립니다!\r\n\r\n이번 이메일을 통해 향후일정, Participation Agreement, 추가 문의사항에 대해 안내드립니다.\r\n\r\n<향후일정>\r\n\r\n- 본선진출자 사전교육\r\n  - 일시: 8월 11일 (월요일) 오후 1:30 - 5:00\r\n  - 장소: 마이크로소프트 코리아 오피스, 13층, 1C Jeju 컨퍼런스 룸 (서울 종로구 종로1길 50, 더 케이 트윈 타워 A동, 11-16층)\r\n  - 참고: 일정은 변경될 수 있습니다\r\n\r\n- 본선행사\r\n  - 일시: 8월 27일 (수요일) 오전 9:00 - 오후 6:30\r\n  - 장소: 고려대학교 신공학관\r\n  - 참고: 일정은 변경될 수 있습니다\r\n\r\n- 해피아워\r\n  - 일시: 8월 27일 (수요일) 오후 7:00부터\r\n  - 장소: 삼성통닭 본점 (서울 성북구 고려대로24길 60, 1층)\r\n\r\n<Participation Agreement>\r\n\r\n  *   첨부된 Participation Agreement는 사전교육, PC대여, 및 본선 참여를 위해 필요한 문서입니다.\r\n  *   이름과 주소가 맞는지 확인하시고, 수정이 필요한 경우 회신 부탁드립니다.\r\n  *   서명 후, 이메일로 회신하여 제출하시거나 8월 11일 마이크로소프트 행사에 2 부를 인쇄하여 제출해주시면 됩니다.\r\n\r\n<추가 문의사항>\r\n다음 질문에 대한 답변을 이메일로 회신해 주세요:\r\nQ1. 8월 11일 사전 교육 세션 참석 여부 (예/아니오)\r\nQ2. 8월 27일 저녁 해피 아워 참석 여부 (예/아니오)\r\nQ3. 한국마이크로소프트가 해커톤 및 그 결과를 홍보하는 자료에 본인의 성명, 초상, 음성, 이미지 등을 사용하는 것에 대한 동의여부. 예를 들면, 행사 사진을 마이크로소프트 보도자료나 소셜에 게시  (예/아니오)\r\nQ4. 행사 기념품 티셔츠 선호 사이즈 (옵션: XS, S, M, L, XL, XXL, XXXL, 4XL)\r\n\r\n추가로 궁금하",
+      "tag": "받은",
+      "summary": "진성님,\r\n\r\n안녕하세요!\r\n\r\n먼저, 퀄컴 EdgeAI 개발자 해커톤 본선 진출을 진심으로 축하드립니다!\r\n\r\n이번 이메일을 통해 향후일정, Participation Agreement, 추가 문의사항에 대해 안내드립니다.\r\n\r\n<향후일정>\r\n\r\n- 본선진출자 사전교육...",
+      "classification": "university.",
+      "attachments": [
+        {
+          "filename": "[Jinsung Kim]Participation Agreement_ Edge AI Developer Hackathon\r\n (for Phase 1 Winners) (KR).pdf",
+          "size": 310042,
+          "mime_type": "application/pdf",
+          "extension": ".pdf",
+          "type": "document_pdf",
+          "extracted_text": "=== 페이지 1 ===\nHACKATHON PARTICIPATION AGREEMENT\nThis Program Participation Agreement (this “Agreement”) is made effective as of August 1, 2025, (the\n“Effective Date”) by and between:\nQualcomm Technologies, Inc., a Delaware corporation with an office at 5775 Morehouse Drive, San\nDiego, California 92121, U.S.A. (“QTI”)\nAND\nJinsung Kim, a Republic of Korea citizen with residence at 103-ho, 5-dong, 1109, Yangjae-daero,\nSongpa-gu, Seoul, Republic of Korea (“Participant”).\nQTI and Participant are referred to in this Agreement collectively as the “Parties” and individually as\na “Party”.\nBACKGROUND\nA. WHEREAS, QTI has been conducting, and Participant has been participating in, the program\nknown as the Qualcomm® Edge AI Developer Hackathon in Korea (the “Competition”) (the\ndetails of which are available as of the Effective Date on the Competition website currently\nlocated at: https://www.qualcomm.com/developer/events/edge-ai-developer-hackathon (the\n“Competition Website”), which initiative is intended to foster innovation in on device artificial\nintelligence by sponsoring a contest with individual developers in the Republic of Korea,\ninvolved in product design and development using QTI’s compute platforms and technologies\nincluding the models available through the Qualcomm AI Hub (the “AI Hub”).\nB. WHEREAS, the Competition is governed by the Official Rules available at: chrome-\nextension://efaidnbmnnnibpcajpcglclefindmkaj/https://www.qualcomm.com/content/dam/qco\nmm-martech/dm-assets/documents/Official-Rules-Edge-AI-Developer-Hackathon-\nBengaluru.pdf (the “Official Rules”), which are incorporated herein by this reference; in the\nevent of any conflict or inconsistency between the Official Rules and this Agreement, the terms\nof this Agreement prevail, govern, and control;\nC. WHEREAS, Participant is a citizen of the Republic of Korea who has participated in the first\nphase of the Competition and was selected as a “Shortlisted Entrant” for the next phase of the\nCompetition based on a review of its Competition proposal undertaken by or on behalf of QTI\n(the “Proposal”); and\nD. WHEREAS, QTI has agreed, in accordance with the terms and subject to the conditions in this\nAgreement set forth below, to (i) make available to Participant certain QTI proprietary\nsoftware, hardware and infrastructure including without limitation to the AI Hub materials and\nmodels (“QTI Products”), which items may be made available at certain locations designated\nby QTI (“Facilities”) or through remote access, and (ii) provide certain assistance which may\nbe provided in the form of access to hardware support, as described herein, to facilitate\ndevelopment of the Proposal into a working prototype for participation in the next phase of the\nCompetition (the “Project”).\nAGREEMENT\nNOW THEREFORE, in consideration of the mutual covenants and promises contained herein, and\nfor other good and valuable consideration, the receipt and legal sufficiency of which is hereby\nacknowledged, the Parties hereby agree as follows:\n1. Scope\n\n=== 페이지 2 ===\n1.1 This Agreement shall be effective as of the Effective Date and, unless terminated earlier as\npermitted herein, shall continue through the last day of the Competition as published on the\nCompetition Website (the “Term”).\n1.2 QTI may, at its sole discretion, and subject to Participant’s execution or acceptance of all\napplicable license agreements or other terms of use as determined by QTI, including without\nlimitation any terms or licenses applicable to the AI Hub, provide Participant with limited\naccess to QTI Products, which may be provided only at designated Facilities or through the\naccess channels designated by QTI or its authorized representative. The term of such access to\nQTI Products may be limited to the Term, in QTI’s sole discretion, although QTI may designate\na shorter or longer term of use for any particular QTI Products that are supplied.\n1.3 Subject to Participant’s ongoing compliance with the terms of this Agreement, QTI, or its\ndesignee, may, in its sole discretion, provide Participant with QTI hardware which shall be used\nby Participant solely to develop the Project and otherwise participate in the Competition. The\nhardware may be delivered by QTI or its designee in one or more shipments during the Term.\nParticipant shall be responsible for the payment of all taxes owed in relation to its receipt of\nany hardware and any benefits received pursuant to this Agreement or any other agreement\nentered into by Participant with QTI in furtherance of the activities contemplated under this\nAgreement, including but not limited to income, sales and use taxes, value-added tax, business\ntax, service tax, excise tax, consumption tax, customs duties or any similar charges or fees. If\nQTI is required by applicable law to withhold any taxes from any payment to be made to\nParticipant, then the amount due to Participant in respect to such payment shall be reduced by\nthe amount of such income tax withholding. Upon request, QTI will deliver to Participant a tax\nwithholding certificate evidencing the payment of any such income tax withholding. Upon\nreceipt by Participant from QTI of such tax withholding certificate, the portion of the payment\nrepresented by such tax withholding certificate will be deemed to be fully paid.\nTo receive any hardware from QTI or its designee, Participant is required to furnish to QTI,\nrelevant documents and information required by QTI, including the following documents, if so\nrequired by QTI:\n(i) Any requested tax documentation including, without limitation, the necessary\nincome tax withholding application, form, residency certificate (if required), or tax\ncode;\nand\n(ii) Any other information requested by QTI to permit Participant to enter in the\nCompetition or this Agreement or to facilitate any of the transactions contemplated\nherein (for example, Participant’s bank account information).\nParticipant shall ensure that any hardware provided by or for QTI pursuant to this Agreement\nis used only for the purpose of developing the Project for the Competition.\n1.4 QTI may, at its discretion, provide Participant with access to its or its affiliates’ personnel or\nconsultants to provide advice to Participant in relation to its execution of the Project. QTI does\nnot guarantee that access to such personnel and consultants will be given, and QTI makes no\nassurances that any such granted access will continue or that specific personnel or consultants\nwill be made available to Participant. Participant acknowledges and agrees that any advice\nprovided by any of QTI’s personnel and consultants is for informational purposes only and does\nnot and will not ensure any specific result may occur in the Competition.\n1.5 Any and all Facilities, QTI Products and advice related to the Competition provided by or for\nQTI or its affiliates or contractors (the “QTI Deliverables”) are provided solely on a non-\n\n=== 페이지 3 ===\nexclusive basis to Participant. Participant acknowledges and agrees that QTI Deliverables may\nsimultaneously be provided the same or equivalent QTI Deliverables to others, including to\nother participants involved in the Competition. ALL QTI DELIVERABLES ARE PROVIDED\nON AN “AS-IS” BASIS WITHOUT ANY REPRESENTATIONS OR WARRANTIES OF\nANY KIND. PARTICIPANT ACKNOWLEDGES THAT QTI DOES NOT IN ANY\nMANNER REPRESENT, WARRANT OR GUARANTEE THAT ANY OF THE QTI\nDELIVERABLES ARE ERROR-FREE OR WILL CONTRIBUTE TO THE GROWTH OR\nSUCCESS OF THE BUSINESS OF PARTICIPANT IN ANY MANNER OR RESULT IN\nANY ASSURED OUTPUTS FOR THE PROJECT. IN ADDITION, PARTICIPANT\nAGREES AND ACKNOWLEDGES THAT IT IS ONLY PERMITTED TO ACCESS AND\nUSE THE FACILITIES FOR A LIMITED PERIOD OF TIME AS QTI DESIGNATES TO\nFACILITATE THE PROJECT, AND SUCH ACCESS DOES NOT IN ANY MANNER\nCREATE, INDICATE, GRANT, VEST OR PROVIDE ANY RIGHTS OR INTERESTS,\nINCLUDING ANY RIGHT OF ACCESS OR CONTINUED USE, WITH RESPECT TO ANY\nOF SUCH FACILITIES, INCLUDING THE CREATION OF ANY TENANCY OR ANY\nOTHER FORM OF PROPERTY RIGHT.\n1.6 Participant acknowledges and agrees that, in addition to other rights QTI may have pursuant to\nthis Agreement or otherwise, QTI is entitled in its sole discretion to disqualify or terminate\nParticipant’s participation in the Competition immediately upon notice if (by way of example\nand without limitation): (i) Participant violates the Competition’s rules or does not adhere to\nthe terms of this Agreement, (ii) Participant does not actively and in good faith participate in\nthe Competition, (iii) Participant misuses any hardware provided by or on behalf of QTI, or any\nother award or incentive provided by QTI as part of the Competition, (iv) Participant is in\nbreach of this Agreement or any of QTI’s policies or codes of conduct, (v) Participant’s ongoing\nparticipation in the Competition may adversely affect the reputation and standing of QTI or its\naffiliates, or (vi) Participant is not allowed by the applicable laws or any order of the\ngovernment authorities to participate in the Competition. Participant hereby agrees not to\ndispute any such decision that is made by QTI in relation to the Competition.\n1.7 QTI reserves the right to not shortlist Participant or any other participants in the final evaluation\nof the Competition or to select multiple participants, at QTI’s sole discretion and judgment in\naccordance with the terms and conditions set forth herein and in the Official Rules. If\nParticipant withdraws or is disqualified from the Competition at any stage of the Competition,\nit shall return to QTI the hardware provided to it by QTI pursuant to this Agreement on site or\nwithin ten (10) business days following such withdrawal or disqualification if such hardware is\nreceived via shipment.\n2. Participant Obligations\n2.1 Participant shall dedicate sufficient time and effort to further develop the Proposal and execute\nthe Project effectively. Participant shall notify QTI of any proposed changes to the Proposal.\nAny such changes shall require QTI’s written consent before their implementation.\n2.2 Participant shall ensure compliance with QTI’s policies and procedures provided or made\navailable to such Participant, including without limitation those relating to codes of conduct,\nethical behaviour, Internet connectivity, access, security, export control, and the protection and\nuse of intellectual property. QTI shall be entitled to require replacement or removal of any\nperson from Facilities for any reason, including but not limited to misconduct or violation of\npolicies or procedures.\n2.3 Participant shall comply with all applicable terms of use and license terms applicable to the\nQTI Products. Such use of QTI Products may be required to be undertaken solely within the\npresence of certain designated Qualcomm personnel, at QTI’s or its affiliates’ discretion.\n\n=== 페이지 4 ===\n2.4 Participant acknowledges that there may be other participants utilizing the Facilities as part of\nthe Competition. Participant shall ensure that its activities, and those of all persons under the\ndirection or control of Participant, using the Facilities and QTI Products to work on the Project\nshall not cause any disruption to other participants in the Competition, especially with respect\nto the use of any shared or common locations and/or facilities such as meeting rooms, internet\nconnectivity, and computing, reprographic and telecom resources.\n2.5 Participant agrees that, in connection with its participation in the Competition, it shall, at all\ntimes in the conduct of (i) its business and operations, and (ii) in its dealings with all parties,\ncomply with all applicable laws.\n2.6 Participant shall ensure that it does not (by virtue of any of its acts and omissions), create any\ncircumstances, obligations or expectations which a third party may use as a basis to make or\nhold QTI or its affiliates liable for any claims relating to, or arising from, (i) participation by\nParticipant in the Competition; (ii) use by Participant of the Facilities or QTI Products; or (iii)\nany products and/or services of Participant.\n2.7 Participant agrees and acknowledges that it shall be fully responsible for any damage, loss or\nliability caused as a result of any acts or omissions of Participant during the Competition,\nincluding due to any negligence. Participant shall, upon request from QTI or its affiliates,\nreplace, repair or pay for any damaged or lost equipment, components/parts or other QTI\nProducts supplied by QTI.\n3. Intellectual Property Rights\n3.1 For the purposes of this Agreement, “Intellectual Property Rights” means patents, rights to\ninventions, utility solutions, copyrights, trademarks, trade names and domain names, rights in\nget-up, rights in goodwill or to sue for passing off, rights in designs, rights in computer\nsoftware, database rights, rights in know-how and trade secrets, rights associated with AI\nmodels, and any other intellectual property rights, in each case whether registered or\nunregistered and including all applications (or rights to apply) for, and renewals or extensions\nof, such rights and all similar or equivalent rights or forms of protection which may now or in\nthe future subsist in any part of the world.\n3.2 As between Participant and QTI, excluding all QTI Products, all Intellectual Property Rights in\nthe Proposal and the Project, including all materials and information therein, that in each case\nwere originally created and owned by Participant solely in connection with and as a result of\nits participation in the Competition (the “Participant Materials”) shall vest solely with\nParticipant, subject to the rights of QTI and its affiliates in and to any QTI Products (and any\nderivative works thereof) referenced, used or incorporated with or in, or relating to, the\nParticipant Materials, regardless of whether they are artificial intelligence related.\n3.3 Participant acknowledges that its use of any QTI Products is subject to the applicable, separate\nlicense agreements or terms of use prescribed by the relevant licensing entity, and no rights to\nuse any QTI Products are granted or deemed to be granted pursuant to this Agreement. All\nright, title and interest in and to QTI Products, including any Intellectual Property Rights therein\nor relating thereto, including but not limited to, Intellectual Property Rights associated with the\nAI models available through AI Hub shall remain vested solely with QTI, its affiliate or the\nrelevant licensor. QTI, its affiliate or the relevant licensor shall have the right, at any time, to\nrevoke any such license without giving any reasons or creating any liability to Participant or\nany other party.\n3.4 Regardless of whether it is artificial intelligence related, Participant hereby grants to QTI and\nits affiliates a worldwide, fully paid up, royalty-free, non-exclusive license, under all\nIntellectual Property Rights that Participant owns, is licensed to use, or controls in and to the\n\n=== 페이지 5 ===\nParticipant Materials, and with the right to sublicense such license to contractors of QTI and its\naffiliates engaged to perform services related to the Competition, to use, import, modify, create\nderivative works of, adapt, reproduce, perform, and transmit the Participant Materials as\nnecessary to provide support and related services to Participant related to the Project.\nParticipant agrees not to exercise any moral rights contained in any Intellectual Property Rights\nagainst QTI and its affiliates.\n3.5 Participant acknowledges that: (i) QTI and its affiliates have access to ideas, concepts,\nstrategies, prototypes, products, code, know-how, trade secrets, plans, designs and construction\ninformation, processes and flowcharts, formulas, manufacturing techniques, discoveries,\ninventions, product specifications, machinery, drawings, photographs, computer source codes,\nequipment, devices, tools and apparatus and any other engineering or other technical\ninformation, and other materials; and (ii) ideas, concepts, strategies, etc. of QTI and its affiliates\nmay be competitive with, similar to, or identical to content in the Proposal, Project or\nParticipant Materials and/or each other in theme, idea, workflow, concept, design, format, or\nother respects. Participant acknowledges and agrees that Participant will not be entitled to any\ncompensation as a result of any use by QTI or its affiliates of any such similar or identical\nmaterial that has or may come to QTI, or any of its affiliates, from other sources. Except where\nprohibited by applicable laws, neither QTI nor any of its representatives, subsidiaries, affiliates,\nadvertising and/or promotion agencies, legal and financial advisors, or any of their respective\nofficers, directors, shareholders, agents, licensees, licensors and employees (the “Released\nParties”) shall have any duty or liability, whether direct or indirect, vicarious, contributory, or\notherwise, with respect to the infringement or protection of Participant’s Intellectual Property\nRights in and to the Proposal, the Project or Participant Materials. To the extent permitted by\napplicable laws, Participant acknowledges and agrees that, with respect to any claim of\nParticipant relating to or arising out of QTI or its affiliates’ actual or alleged exploitation or use\nof any Proposal, the Project or Participant Materials submitted, created or arising in connection\nwith the Competition, the damage, if any, thereby caused to Participant will not be irreparable\nor otherwise sufficient to entitle Participant to seek any injunctive or other equitable relief or\nin any way enjoin, otherwise interfere with, delay, or interrupt the production, distribution,\nexhibition, or other exploitation of any production based on, or allegedly based on, the Proposal,\nthe Project or Participant Materials, and Participant’s rights and remedies in any such event\nshall be strictly limited to the right to recover damages, if any, in an action at law.\n3.6 Participant hereby grants permission (by complying with required conditions under the law,\ne.g., relating to personal data protection, and except where prohibited by law) to QTI and its\naffiliates, contractors and agents (individually, a “QTI Party” and collectively, the “QTI\nParties”) to use Participant’s name and location, logo, graphics, photograph, voice, likeness,\nand result in the Competition (all at the QTI Parties’ discretion) for QTI’s and its affiliates’\nadvertising or publicity (including, without limitation, Programming) in any and all media now\nor hereafter devised throughout the world, in perpetuity and without additional compensation,\nnotification, release, or permission. A QTI Party may request that Participant participate in\npromotional activities, case studies and/or other marketing activities regarding the Competition.\nParticipant agrees to use its best efforts to participate in such activities and case studies, and\nParticipant agrees to comply with all applicable sponsorship and disclosure laws and\nregulations when participating in all such activities. Participant irrevocably consents to and\nauthorizes the QTI Parties to film, videotape, digitally record and/or photograph Participant in\nconnection with the Competition (the “Recordings”). Any QTI Party may edit and/or include\nRecordings, in its sole discretion, in one or more visual, audio and/or audio-visual programs or\nprogramming segments prepared by or on behalf of QTI and/or its affiliates (“Programming”)\nand to use, reproduce, distribute, exhibit, perform and otherwise exploit any Recordings and/or\nany and all portions of Recordings in any and all media whether now known or hereinafter\ndevised throughout the world, in perpetuity and for any purpose or use whatsoever as designated\nby QTI and/or its affiliates. Participant understands and agrees that Participant shall not be\nentitled to any compensation with respect to the Recordings or the any Programming.\n\n=== 페이지 6 ===\nParticipant hereby expressly waives and releases each QTI Party and each of its employees,\nsuccessors, assigns, licensors and licensees from and against any and all claims which\nParticipant may have relating to invasion of privacy (including personal data), publicity,\ndefamation, infringement of copyright (including moral rights) or any other claim or cause of\naction arising out of (a) the production, use, distribution, exhibition, advertising, promotion or\nother exploitation of any Programming, and (b) any and all portions of the Recordings, whether\nor not included in any Programming.\n3.7 Participant hereby undertakes that it has not, does not and will not infringe any Intellectual\nProperty Rights of any third parties during the performance of its obligations under this\nAgreement. Accordingly, Participant agrees, at its own expense, to be solely liable to settle all\nclaims or disputes initiated by third parties against QTI due to the infringement of the third\nparty’s Intellectual Property Rights by Participant, provided that the Participant may not offer\nany settlement, compromise or discharge that admits any liability or affects the rights of the\nReleased Parties without the prior written approval of QTI or the applicable Released Party.\nAdditionally, Participant hereby agrees to indemnify, defend and hold the Released Parties\nharmless against any claim, liability, damages, losses, judgment, or other expense (including\nbut not limited to reasonable attorney’s fees and court costs) (“Liability”) arising out of or\nresulting from any third-party claims made or proceedings brought against QTI, to the extent\nsuch Liability arises in the infringement of Intellectual Property Rights of any third parties by\nParticipant or from Participant’s breach of any of the representations, warranties, obligations,\nor covenants set forth in this Agreement or otherwise in the Official Rules.\n4. Confidentiality\n4.1 “Confidential Information” means any information of a sensitive, confidential, proprietary\nnature or otherwise relating to QTI or its affiliates, including but not limited to business and/or\ntechnical information with respect to operations, business plans, products, roadmaps, strategies,\ndevelopments, customers, and/or intellectual property, QTI Products and any information or\ndetails relating to them (whether or not recorded in documentary form or on computer disk or\notherwise recorded or retained) and whether or not such information is expressly stated to be\nconfidential, which is obtained and/or received in connection with the scope of this Agreement.\n4.2 Participant shall treat all Confidential Information as confidential, whether or not so identified,\nand shall not disclose, or permit the disclosure of such information without the prior written\nconsent of QTI.\n4.3 The terms of this Agreement are in addition to the terms of any separate nondisclosure\nagreement in effect between QTI and Participant, and in the event of any inconsistency between\nthe terms of such agreements, those terms which are most protective of the Confidential\nInformation shall prevail. The confidentiality obligations herein shall survive any expiration\nor termination of this Agreement.\n4.4 Without the express prior written consent of QTI, Participant shall not make use of any\ntrademark, trade name, brands, logos or other identifying or associated marks of Qualcomm\nIncorporated or any of its affiliates, or publicize or disclose the existence or terms of this\nAgreement to any third party by any method including but not limited to any news release,\nadvertisement, publicity or promotional material.\n4.5 Participant shall treat and retain any and all communications or information regarding the\nCompetition, including but not limited to status/progress of the Competition, shortlists, stages\nof evaluation, eliminations, as completely confidential and shall not share or disclose any such\ninformation with any third party such as fellow competitors or media or others without the prior\nwritten consent of QTI. Participant shall restrict any dissemination of any such information to\nthe relevant members of the team under obligations of strict confidentiality that are no less\n\n=== 페이지 7 ===\nstringent that the terms hereof. Participant agrees that any breach of confidentiality obligations\nmay result in its disqualification from the Competition or other measures as determined by QTI.\n5. Representations and Warranties\n5.1 Participant represents and warrants to QTI and its affiliates the following:\n(i) Participant has reached the age of majority of its country and has the full authority to\nenter into this Agreement and comply with each of its terms and to participate in the\nCompetition;\n(ii) Participant is under no contractual duty, or other restriction or obligation, which is\ninconsistent with or in conflict with its required performance of its obligations under this\nAgreement or which will interfere with the Project execution, and Participant shall not\ntake on any assignments or engage in any activities which is likely to cause a conflict of\ninterest in relation thereto;\n(iii) except for any QTI Products, the Proposal, the Project and the Participant Materials are\nall original works created by Participant which do not violate or infringe any third party\nrights;\n(iv) if the Proposal, the Project or any Participant Materials rely on, incorporate or otherwise\nuse any third party material, including music, trademarks, logos, or any copyrighted\nmaterial, Participant shall disclose all details regarding such third party materials and\nshall ensure that it has obtained all rights, licenses, permissions and releases in writing\nfrom any such third party for use of such materials in connection with the Proposal, the\nProject and Participant Materials, as applicable. Participant shall be solely responsible\nfor any claim from a third party arising from the use of the third party’s rights. QTI shall,\nat its sole discretion, request Participant to submit the consent/permission/license from\nthe third party, as the case may be;\n(v) neither the Proposal, the Project or the Participant Materials will defame, misrepresent,\nor contain disparaging remarks or any other content which could adversely affect the\nname, reputation or goodwill of QTI or its affiliates, contractors or their respective\npersonnel, or any other individuals and/or entities;\n(vi) the Proposal, the Project and Participant Materials do not and will not contain\npornographic or obscene content, hateful content of any kind, content which promotes\nviolence or harm to another living creature, or any other offensive or inappropriate\ncontent or contain any content which is regarded as contrary to social morality;\n(vii) the Proposal and the Project will conform to all rules and guidelines for the Competition\nas posted or otherwise promulgated by or for QTI; and\n(viii) the Proposal, the Project and Participant Materials do not and will not violate any\napplicable law or include any content that would abet or constitute a criminal offense\nunder the laws of any jurisdiction.\n6. Indemnities\nTo the extent permitted by applicable laws, Participant shall defend, indemnify and hold the\nReleased Parties harmless from and against any and all claims, suits, actions, proceedings,\ncauses of action, losses, liabilities, damages, awards, costs and expenses (including attorneys’\nfees) arising from or related to: (i) any breach or alleged breach by Participant of this\nAgreement, including any obligation, covenant, representation or warranty; (ii) any non-\n\n=== 페이지 8 ===\ncompliance with or violation of applicable laws related to its participation in the Competition;\n(iii) any negligence, recklessness, acts, omissions or misconduct of Participant related to\nParticipant’s participation in the Competition; and/or (iv) death or personal injury or property\ndamage arising out of acts or omissions of Participant related to the Competition.\n(1) Limitation of Liability\nTO THE EXTENT PERMITTED BY APPLICABLE LAWS, IN NO EVENT SHALL THE\nRELEASED PARTIES) BE LIABLE FOR ANY LOSS OF PROFIT, LOSS OF REVENUE,\nLOSS OF BUSINESS, LOSS OF GOODWILL, OR FOR ANY SPECIAL, INCIDENTAL,\nCONSEQUENTIAL, PUNITIVE OR OTHER INDIRECT DAMAGES, HOWSOEVER\nCAUSED, ARISING OUT OF, RESULTING FROM OR IN CONNECTION WITH THIS\nAGREEMENT AND WHETHER OR NOT ADVISED OF THE POSSIBILITY OF SUCH\nLOSSES OR DAMAGES. WITHOUT PREJUDICE TO THE FOREGOING, UNDER NO\nCIRCUMSTANCE SHALL THE TOTAL, AGGREGATE LIABILITY OF QTI AND ITS\nAFFILIATES UNDER THIS AGREEMENT, WHETHER BASED IN CONTRACT, TORT,\nSTRICT LIABILITY OR UPON ANY OTHER THEORY OF LIABILITY, EXCEED THE\nAMOUNT OF USD ONE HUNDRED ($100.00) DOLLARS.\n7. Termination\n7.1 This Agreement may be terminated by QTI upon written notice to Participant:\n(i) if Participant is in breach of its obligations under this Agreement and, in the case of a\nbreach that is capable of being cured, has not cured such breach within five (5) days, or\na shorter period as determined by QTI, of receiving such notice from QTI;\n(ii) immediately, for any of the reasons stated in Section 1.8 above, or if Participant shows\nno material progress or materially deviates from its original Proposal without QTI’s\nexplicit written consent; or\n(iii) for any reason or no reason, by giving Participant at least five (5) days prior written notice\nthereof.\n7.2 QTI may cancel, modify, or suspend the Competition (or any portion thereof) at its sole\ndiscretion, for any reason (or no reason) and without any further obligation or liability. This\nAgreement shall immediately terminate upon any such cancellation.\n7.3 In the event of any termination of this Agreement pursuant to Section 7.1(i) or 7.1(ii) above,\nParticipant shall account for and return to QTI on site or within ten (10) business days (if receipt\nthrough shipment) of termination all hardware provided to it by QTI pursuant to this\nAgreement. In the event of any expiration or termination of this Agreement for any reason, (i)\nParticipant shall promptly remove its equipment and other materials from the Facilities and\nshall have no further right to access or enter the Facilities without QTI’s explicit consent, and\n(ii) QTI reserves the right to terminate any and all license or other agreements executed by\nParticipant with respect to any QTI Products provided to Participant for use in the activities\ncontemplated by this Agreement, in which case Participant shall cease further use of such QTI\nProducts in its possession and either delete or uninstall them permanently (including any\ndocumentation, binaries and source code) or else, at QTI’s direction, return them to QTI or its\ndesignated affiliate. For the avoidance of doubt, any use of QTI Products after termination or\nexpiration of this Agreement, including as part of any outputs or results of the Project\n(commercially or otherwise), shall be subject to separate agreements entered into with QTI or\nthe relevant licensors or providers.\n\n=== 페이지 9 ===\n7.4 All terms and conditions of this Agreement which, by their nature or express terms, are intended\nto survive expiration or termination of this Agreement shall so survive (including, without\nlimitation, terms relating to the protection of Intellectual Property Rights, representations and\nwarranties, and any provisions relating to the interpretation or enforcement of the terms of this\nAgreement).\n8. Force Majeure\nNeither Party shall be liable to the other Party for any delay or failure to fulfill its obligations\nunder this Agreement where any such delay or failure is caused due to any reason beyond the\ncontrol of the affected party, including but not limited to any act of terrorism, biological or\nchemical contamination, nuclear risks, fire, floods, acts of God, acts or regulations of any\ngovernmental or supranational authority, war, riots.\n9. Governing Law and Dispute Resolution\n10.1 This Agreement will be governed by and construed and enforced in accordance with the laws\nof the State of California, U.S.A., determined for this purpose without regard to any conflict of\nlaw principles that would result in the application of the laws of a different jurisdiction.\n10.2 The Parties shall attempt to resolve all disputes, claims and controversies arising under or in\nconnection with this Agreement through mutual negotiation in good faith. To the extent\npermitted by applicable laws, all such disputes, claims or controversies which remain\nunresolved by such good faith negotiation, within thirty (30) days of either Party seeking such\nnegotiation, shall be submitted to a confidential arbitration to be conducted in accordance with\nthe Rules of Arbitration of the International Chamber of Commerce (“ICC Rules”). A single\narbitrator will be selected in accordance with the ICC Rules for such arbitration. The place of\nsuch arbitration will be in San Francisco, California, U.S.A. The language of the arbitration\nshall be English. The arbitrator’s decision shall be final and binding on the Parties. The Parties\nagree that judgment may be entered upon such an award in any court of competent jurisdiction,\nand that the prevailing Party, as determined by the arbitrator or court, will be entitled to recover\nfrom the other party all arbitration costs, reasonable attorney’s fees, and other related expenses\nincurred in any such proceedings.\n10.3 Nothing herein, including Section 10.2 above, shall preclude QTI from seeking and obtaining\nfrom a court of competent jurisdiction appropriate equitable relief, including without limitation,\na temporary restraining order or other injunctive relief, to prevent a breach of this Agreement\nor to otherwise maintain the status quo pending outcome of any arbitration proceeding.\n10. Relationship Between the Parties\nParticipant acknowledges and confirms that itwill be acting as an independent contractor for\npurposes of their participation in the Competition. This Agreement and any cooperation\nbetween the Parties as contemplated hereunder shall not be construed to constitute a\nrelationship of employer and employee between the Parties, or be construed as constituting the\nParties as partners, joint ventures, principal and agent, or otherwise as participants in a joint\nundertaking. Nothing herein shall authorize either Party to enter into any contract or other\nbinding obligation on behalf of the other Party hereto.\n11. Compliance with Laws\nParticipant represents and warrants to QTI that, in connection with the transactions\ncontemplated herein or in connection with any other transactions involving QTI, Participant,\nand everyone acting on its behalf, will comply with all applicable anti-corruption laws.\n\n=== 페이지 10 ===\nParticipant represents and warrants to QTI that Participant has not, and covenants and agrees\nthat it will not, in connection with the transactions contemplated herein or in connection with\nany other transactions involving QTI, make, promise, or offer to make any payment or transfer\nanything of value, directly or indirectly, to any individual to secure an improper advantage. It\nis the intent of the Parties that no payments or transfer of value will be made which have the\npurpose or effect of public or commercial bribery, acceptance of or acquiescence in extortion,\nkickbacks, or other unlawful or improper means of obtaining or retaining business. Participant\nrepresents and warrants that no payment will be made to anyone for any reason on behalf of or\nfor the benefit of QTI which is not pre-approved in writing by QTI and which is not properly\nand accurately recorded in Participant’s books and records, including amount, purpose and\nrecipient, all of which will be maintained with supporting documentation.\nParticipant represents and warrants that, in connection with the activities contemplated by this\nAgreement, the Participant shall at all times comply with all applicable domestic and\ninternational anti-corruption and record-keeping laws and regulations, including but not limited\nto the Combatting Bribery Law issued by Royal Decree No. N/36, the Civil Service Law issued\nby Royal Decree No. m/49, the Foreign Corrupt Practices Act, and the UK Bribery Act.\nParticipant shall not, directly or indirectly, offer, pay, promise make, offer, authorize, or\npromise any payments or contribution of money, gifts, business courtesies, hospitality or\nanything of value to any person for the purpose of influencing any official act or decision of\nsuch person in their official capacity, inducing such person to perform or omit any act in\nviolation of their lawful duty, improperly obtain or retain business, securing any improper\nadvantage, pay for improper advantage already secured, or inducing such person to use their\ninfluence to affect or influence any act or decision of any foreign or domestic government\nofficial or employee, government instrumentality, political party, political official, candidate\nfor political office, member of a royal family, or any officer or employee of a public\ninternational organization. Participant represents and warrants that no payment will be made to\nanyone for any reason on behalf of or for the benefit of QTI which is not pre-approved in writing\nby QTI and which is not properly and accurately recorded in Participant’s books and records,\nincluding amount, purpose and recipient, all of which will be maintained with supporting\ndocumentation and provided to QTI upon written demand. Subject to relevant laws, Participant\nagrees to notify QTI of any violation of this section within a reasonable period of time after any\nsuch violation..\nParticipant additionally represents and warrants to QTI that, in connection with the activities\ncontemplated by this Agreement, Participant will comply with, will not violate, and will not\ncause QTI to violate any export control and economic sanctions laws, orders, and regulations,\nincluding but not limited to the Export Administration Regulations, 15 CFR Parts 730-774, the\nForeign Assets Control Regulations, 31 CFR Parts 500-599, as well as similar laws and\nregulations of other applicable jurisdictions. Participant warrants that they are not (i) listed on\na prohibited or restricted party list published by the U.S. government, including but not limited\nto the U.S. Department of Treasury’s “List of Specially Designated Nationals and Blocked\nPersons” and “Consolidated Sanctions List”, and the U.S. Department of Commerce’s Entity\nList, Unverified List, and Denied Persons List, or any similar list maintained by the United\nKingdom, the European Union or its Member States, or other applicable local authority; (ii)\nlocated or resident in a country or territory against which the U.S. government maintains\ncomprehensive economic sanctions or an embargo (i.e., currently, Cuba, Iran, North Korea,\nSyria, and the Crimea and other regions of Ukraine controlled by the Russian Federation); or\n(iii) otherwise the target of U.S. sanctions. Subject to relevant laws, Participant agrees to notify\nQTI of any violation of this section within a reasonable period of time after any such violation.\n12. Miscellaneous\n12.1 Notwithstanding any translated version of this Agreement which may be provided to\nParticipants, the English language version of this Agreement is the official version that bind the\n\n=== 페이지 11 ===\nParties hereto. In the event that any conflict or discrepancy between any translated version of\nthis Agreement and the English language version, the English language version shall prevails.\n12.2 If any provision of this Agreement is held to be invalid or unenforceable in whole or in part,\nsuch provision shall be deemed not to form a part of this Agreement and the validity and\nenforceability of the remainder of this Agreement will not be affected by any such invalidity or\nunenforceability.\n12.3 Participant and its agents shall not release information with respect to the existence or terms of\nthis Agreement or an amendment or any other document thereto and shall not use the logo,\ntradenames, trademarks, service names, service marks, trade dress, or photographs of QTI or\nany of its affiliates, or reference QTI or any of its affiliates in any direct or indirect manner,\nwithout the prior written consent of QTI.\n12.4 No waiver, delay or failure by either Party in enforcing any provision of this Agreement shall\nprejudice or restrict the rights of such Party under this Agreement, nor shall a waiver by either\nParty of any breach operate as a waiver of any subsequent breach. The rights, powers and\nremedies provided to each Party in this Agreement are in addition to, and do not exclude or\nlimit, any right, power or remedy provided by law.\n12.5 A person who or which is not a Party to this Agreement shall not have any right to enforce any\nprovision of this Agreement.\n12.6 Any notice required to be given to a Party under this Agreement must be in writing and sent\neither by (i) prepaid registered post or courier to the Party’s mailing address specified below,\nor (ii) by email to the address(es) specified for the Party below. If a Party has notified the other\nParty of a different address and/or email to which notices should be sent pursuant to this\nAgreement, then such different address and/or email will apply for purposes of this Section.\nNotices to Participant:\nJinsung Kim\n103-ho, 5-dong, 1109, Yangjae-daero,\nSongpa-gu, Seoul, Republic of Korea\nEmail: jinsung030405@gmail.com\nNotices to QTI:\nQualcomm Technologies, Inc.\n5775 Morehouse Drive\nSan Diego, CA 92121\nAttention: Division Counsel\nwith copy sent to Qualcomm Incorporated:\nQualcomm Incorporated\nAttention: Qualcomm Legal Department\n5775 Morehouse Drive\nSan Diego, CA 92121\nEmail: marketinglegal@qualcomm.com\n12.7 Participant shall not assign any of its rights or obligations under this Agreement without the\nexpress prior written consent of QTI; any attempted assignment in violation of the foregoing\nshall be void. QTI may assign this Agreement without consent from Participant. This\n\n=== 페이지 12 ===\nAgreement shall be binding upon and inure to the benefit of QTI and its successors and\npermitted assigns.\n12.8 This Agreement constitutes the entire agreement between the Parties and supersedes all prior\noral or written negotiations and agreements between the Parties with respect to the subject\nmatter hereof. No modification or amendment of this Agreement shall be effective unless in\nwriting duly signed by both Parties.\n13. Elimination of Anti-Social Forces\n13.1 Each Party represents and warrants that such Party and its stockholders, directors, officers and\nemployees (if applicable):\n(i) are not Anti-Social Forces (as defined below);\n(ii) are not members of Anti-Social Forces; and\n(iii) do not have any relationship with the Anti-Social Forces such as providing funding or\nother support, or conducting continuous business transactions with Anti-Social Forces.\n13.2 “Anti-Social Forces” means an organized crime group, a corporate racketeer, and any other\nsimilar organization.\n13.3 Each Party shall be entitled to terminate this Agreement without prior notice if the other Party\nbreaches this Section 15.\n[Signature Page Follows]\n\n=== 페이지 13 ===\nIN WITNESS WHEREOF, the Parties have caused this Program Participation Agreement to be\nexecuted effective as of the Effective Date through their duly authorized representatives. This\nAgreement may be signed in counterparts.\nQualcomm Technologies, Inc. Jinsung Kim\nBy: By:\nPrinted Name: Printed Name:\nTitle: Email:\nExecution Date: Execution Date:",
+          "extraction_success": true,
+          "extraction_method": "pdfplumber",
+          "pages": 13,
+          "document_summary": "1. Qualcomm Technologies, Inc.와 김진성 참여자가 Edge AI 개발 해커톤 프로그램에 참여하는 계약을 체결함.\n2. 계약 기간은 2025년 8월 1일부터 경진대회 종료일까지.\n3. QTI는 특정 소프트웨어, 하드웨어 및 인프라를 제공하여 프로젝트를 지원함.\n4. 프로젝트는 다음 경진대회 참가용으로 제작된 제품 원형 개발을 목표로 함.\n\n(146자)"
+        }
+      ],
+      "has_attachments": true,
+      "attachment_summary": "📎 1개 파일: PDF 1개, 요약 가능 1개"
+    },
+    {
+      "id": 667,
+      "subject": "Fwd: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)",
+      "from": "=?UTF-8?B?7LWc7IiY7Jq0?= <csw21c915@gmail.com>",
+      "date": "2025-07-30 15:59:51",
+      "body": "---------- Forwarded message ---------\r\nFrom: Seohyun (Haley) Kim (Temp) <seohkim@qti.qualcomm.com>\r\nDate: Wed, Jul 30, 2025 at 3:39 PM\r\nSubject: Edge AI 개발자 해커톤 본선진출 축하드립니다. (E.M.Pilot)\r\nTo: csw21c915@gmail.com <csw21c915@gmail.com>\r\nCC: hackathon2025.korea <hackathon2025.korea@qti.qualcomm.com>\r\n\r\n\r\n\r\n\r\n최수운 팀 대표자님,\r\n\r\n\r\n\r\n안녕하세요. 귀하의 팀의Edge AI 개발자 해커톤 본선에 진출했음을 알려드립니다. 예선 제출물 준비에 애써주신 점 진심으로 감사드립니다\r\n.\r\n\r\n\r\n\r\n대표자 분들께 몇 가지 공지 및 문의 사항이 있어 오늘 먼저 메일을 보내 드립니다. 모든 참가자분들께는 이번 주 금요일까지 개별 메일을\r\n드릴 예정입니다.\r\n\r\n\r\n\r\n<향후 일정 안내>\r\n\r\n   - 8월 11일 오후에 한국 마이크로소프트 사무실에서 사전 교육이 진행됩니다. 이 자리에서 Copilot+PC를 대여가 이뤄지며, 사무실\r\n   투어도 예정이 되어있으니 전원 참석을 부탁드립니다.\r\n   - 8월 27일 본선 당일은 오전에는 데모 및 기술 검증, 오후에는 발표/심사/시상, 저녁에는 해피아워가 예정이 되어 있습니다.\r\n\r\n\r\n\r\n<문의사항>\r\n\r\nQ1. 이번 해커톤에는 퀄컴 미국 본사와 APAC지사에서도 참석 예정입니다. 원활한 진행을 위해 통역사를 사용하는 것을 검토중인데, 통역사가\r\n도움이 되실지 의견 부탁드립니다.\r\n\r\nQ2. 본선 진출 팀 대표자님들과의 원활한 소통을 위해 카카오톡 오픈채팅방을 개설을 고려중입니다. 참여 가능하신지 확인해주시면, 초대드리도록\r\n하겠습니다.\r\n\r\nQ3. 본선 진출자 전원이 참여하는 오픈채팅방 개설도 검토중인데, 이 부분도 괜찮으실지 의견 부탁드립니다.\r\n\r\n\r\n\r\n<추가안내사항>\r\n\r\n  ",
+      "tag": "받은",
+      "summary": "---------- Forwarded message ---------\r\nFrom: Seohyun (Haley) Kim (Temp) <seohkim@qti.qualcomm.com>\r\nDate: Wed, Jul 30, 2025 at 3:39 PM\r\nSubject: Edge...",
+      "classification": "security alert.",
+      "attachments": [],
+      "has_attachments": false,
+      "attachment_summary": ""
+    },
+    {
+      "id": 666,
+      "subject": "공유 캘린더 ’came-gpu02’에 참여하려면 초대를 수락하세요",
+      "from": "=?UTF-8?B?6rmA7ZiE7Jqw?= <lionkim2006@gmail.com>",
+      "date": "2025-07-29 08:26:43",
+      "body": "김현우님이 캘린더를 공유했습니다\\n\\n김현우 <lionkim2006@gmail.com>님이  \r\n’came-gpu02’ 캘린더에 대한 일정을 변경할 수 있습니다 권한으로 나를  \r\n초대했습니다.\\n\\n이 공유 캘린더에 참여하려면 초대를 수락하세요. 언제든지  \r\n캘린더를 숨기거나 삭제할 수 있습니다.\\n\\n공유 캘린더에 참여하려면  \r\nhttps://calendar.google.com/calendar/r?cid=MzU0M2Y5YWZhYWQ0MTAzYjJmMjc1NGM1NmFmYTI3M2FkMDJiMmQ1MDVmZTYxMGRmNGM5MTk5OTg4OWUyMGU3ZkBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&ctok=aW5oYS1jYW1lLW1lbWJlckBnb29nbGVncm91cHMuY29t&es=3을  \r\n클릭하세요\\n\\nhttps://support.google.com/a/answer/1626902에서 공유 캘린더에  \r\n대해 자세히 알아보세요.\r\n\r\n-- \nGoogle 그룹스 'inha-came-member' 그룹에 가입했으므로 본 메일이 전송되었습니다.\n이 그룹에서 탈퇴하고 더 이상 이메일을 받지 않으려면 inha-came-member+unsubscribe@googlegroups.com에 이메일을 보내세요.\n이 토론을 보려면 https://groups.google.com/d/msgid/inha-came-member/calendar-b04cf311-63a3-4552-afa9-f4bd2f2b575f%40google.com 페이지로 이동하세요.\n더 많은 옵션을 보려면 https://groups.google.com/d/optout을(를) 방문하세요.",
+      "tag": "받은",
+      "summary": "Mods partnered partnered partnered Tate ({ Chess Chess ChessINT ChessINTINTINT budsINTINTBSDINTINT KongINTINT singerINTINT JindalINT Kong buds budsINT reinforcedINT buds KongINT buds budscooncooncoon tart Jindal Jindalellingellingellingcooncoonellingelling outfits outfits outfitsellingelling Jindal Jindal Bul Bul Bul Jindal Male Male Malezonazona Jindal Forty Forty Jindal Jindal Jindal nights nights nights",
+      "classification": "company.",
+      "attachments": [],
+      "has_attachments": false,
+      "attachment_summary": ""
+    },
+    {
+      "id": 665,
+      "subject": "Important updates to your Pro account usage limits",
+      "from": "Anthropic Team <team@email.anthropic.com>",
+      "date": "2025-07-28 18:27:56",
+      "body": "Hi there,\r\n\r\n\r\n\r\nNext month, we're introducing new weekly rate limits for Claude subscribers, \r\naffecting less than 5% of users based on current usage patterns.\r\n\r\n\r\n\r\nClaude Code, especially as part of our subscription bundle, has seen \r\nunprecedented growth. At the same time, we’ve identified policy violations like \r\naccount sharing and reselling access—and advanced usage patterns like running \r\nClaude 24/7 in the background—that are impacting system capacity for all. Our \r\nnew rate limits address these issues and provide a more equitable experience \r\nfor all users.\r\n\r\n\r\n\r\nWhat’s changing:\r\n\r\nStarting August 28, we're introducing weekly usage limits alongside our \r\nexisting 5-hour limits:\r\n\r\n * Current: Usage limit that resets every 5 hours (no change)\r\n * New: Overall weekly limit that resets every 7 days\r\n * New: Claude Opus 4 weekly limit that resets every 7 days\r\n * As we learn more about how developers use Claude Code, we may adjust usage \r\nlimits to better serve our community.\r",
+      "tag": "스팸",
+      "summary": " Ningoogle commandmentsgoogle Vermont pleasantly pleasantly PvP pleasantly pleasantly pleasantlyinfeldinfeldinfeld Useinfeld pleasantly quick Ul Ul UlTai Ul Ul PvP UlTaiTai UlTaiigh Ul Uligh Ulighighigh UlTai Oregon PvP Ul pleasantly Oregon Ul UlLERTai UlighTai Ul PvPigh UlLER Ul Ul Fog Uligh PvP UlighLER Uligh Fog Ul Ulassets Ul Ulbm Ul Ul",
+      "classification": "spam mail.",
+      "attachments": [],
+      "has_attachments": false,
+      "attachment_summary": ""
+    },
+    {
+      "id": 664,
+      "subject": "This is test mail!!",
+      "from": "=?utf-8?B?6rmA7KeE7ISx?= <optimist1782@naver.com>",
+      "date": "2025-07-27 14:40:46",
+      "body": "Dear [Manager's Name],\nI hope this email finds you well.\nI am writing to provide you with an update on the current status of the [Project Name], as of this week. The team and I have made significant progress, and I’m pleased to share some key developments.\n1. Completed Tasks:\n\nWe have finalized the initial design phase and received approval from the stakeholders.\n\nThe development team has successfully completed the backend setup, and integration with the existing systems is underway.\n\nAll required documentation for Phase 1 has been submitted and archived.\n\n\n2. Ongoing Work:\n\nThe UI/UX team is currently working on implementing feedback from the first prototype.\n\nWe are conducting weekly testing sessions to identify and resolve bugs early in the process.\n\nCoordination with the marketing team is ongoing to align the launch plan with the projected timeline.\n\n\n3. Upcoming Milestones:\n\nBeta version release: [insert date]\n\nInternal demo: [insert date]\n\nFinal testing and QA: [insert date]\n\nOff",
+      "tag": "스팸",
+      "summary": " IntakeCHRETAETAETA lenses Assuming lenses lensesETA lenses lenses lenses irresist lenses Young lenses Young Young Waste Waste Waste Young Waste frontline frontline Young Wasteampa Waste Waste frontline Waste Waste tenancy Waste WasteStrongStrongStrongampa tenancyStrongStrong tenancyampaampa tenancy tenancy tenancy dock dock fir firovoovoovo Protein initialize tenancy tenancy initializeovo Protein dismantling dismantling dismantling crews crews RonaldoStrongStrong crewsubb Sleeping initialize initialize",
+      "classification": "spam mail.",
+      "attachments": [],
+      "has_attachments": false,
+      "attachment_summary": ""
+    }
+  ],
+  "last_update": "2025-08-01T18:32:56.815523",
+  "login_time": "2025-08-01T18:29:57.746139",
+  "session_id": "7ffc3f6f-8fac-4a94-8388-443c1c57c24c"
+}
