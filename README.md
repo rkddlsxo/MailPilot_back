@@ -44,7 +44,6 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 
 ### Backend
 - **Flask**: Backend server
-- **Transformers**: Hugging Face models -> will be modified to local PC models using Qualcomm AI Hub
 - **AI Models**: Nomic, QWEN LLM, EASY_OCR models
 
 ---
