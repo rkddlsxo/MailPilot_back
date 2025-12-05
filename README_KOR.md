@@ -41,7 +41,6 @@ React, Flask 프레임워크를 기반으로 Tauri를 활용하여 개발한 데
 
 ### Backend
 - **Flask**: 백엔드 서버
-- **Transformers**: Hugging Face 모델 -> 퀄컴 ai 허브를 활용하여, 로컬 pc의 모델로 수정 예정
 - **AI Model**: Nomic, QWEN LLM, EASY_OCR 모델 사용 중
 
 ---
