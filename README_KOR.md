@@ -152,10 +152,6 @@ python app.py
 - 백엔드 API 서버가 먼저 실행되어 있어야 함
 - 인터넷 연결 필수 (Gmail 접속 및 AI 모델 사용)
 
-### Token 발급 필요
-- 현재는 app.py에 Qalcom 디바이스가 없는 관계로, Hugging face에서 토큰을 발급받아 사용 요구
-- Nomic과 Hunggface의 토큰을 발급받아서, 해당 부분 수정이 필요함
-- 추후에 퀄컴 ai 허브를 활용하여, 모델 다운로드 후 사용 예정
 
 ---
 
