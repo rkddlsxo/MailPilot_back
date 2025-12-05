@@ -136,10 +136,6 @@ For frontend installation and execution instructions, please check the following
 - Backend API server must be running first
 - Internet connection required (for Gmail access and AI model usage)
 
-### Token Issuance Required
-- Currently requires tokens from Hugging Face due to lack of Qualcomm devices, as specified in app.py
-- Need to obtain tokens from Nomic and Hugging Face and modify accordingly
-- Future plans to use Qualcomm AI hub to download models for local use
 
 ---
 
