@@ -44,7 +44,7 @@ This desktop app was developed using React and Flask frameworks with Tauri, runn
 
 ### Backend
 - **Flask**: Backend server
-- **AI Models**: Nomic, QWEN LLM, EASY_OCR models
+- **AI Models**: Nomic, QWEN LLM, EASY_OCR, Yolo models
 
 ---
 
