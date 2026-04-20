@@ -41,7 +41,7 @@ React, Flask 프레임워크를 기반으로 Tauri를 활용하여 개발한 데
 
 ### Backend
 - **Flask**: 백엔드 서버
-- **AI Model**: Nomic, QWEN LLM, EASY_OCR 모델 사용 중
+- **AI Model**: Nomic, QWEN LLM, EASY_OCR, Yolo 모델 사용 중
 
 ---
 
